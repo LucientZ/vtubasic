@@ -1,2 +1,2 @@
 # vtubasic
-very very simple an basic VTuber runtime
+very very simple and basic VTuber runtime
