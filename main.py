@@ -1,6 +1,6 @@
 import sys
 sys.path.insert(0, "./src")
-from app import App
+from app import *
 
 
 if __name__ == "__main__":

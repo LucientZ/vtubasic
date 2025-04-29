@@ -1,3 +1,3 @@
 # Resources
 
-Put any models here
+This is where things like shaders go
