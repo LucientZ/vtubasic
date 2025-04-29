@@ -3,6 +3,7 @@ import numpy
 from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader, ShaderProgram
 from collections import namedtuple
+from typing import Union
 
 class Program:
     _shader: ShaderProgram
@@ -34,16 +35,15 @@ class Program:
         glDeleteProgram(self._shader)
 
 
-Vertex = namedtuple("Vertex", "x y z r g b")
-VERTEX_SIZE_BYTES = 6 * 4
+Vertex = namedtuple("Vertex", "x y z s t")
+VERTEX_SIZE_BYTES = 5 * 4
 POSITION_OFFSET = 0
-COLOR_OFFSET = 12
+TEXTURE_OFFSET = 12
 
 class Texture:
     _texture: any
     def __init__(self, filepath: str):
         self.load(filepath)
-        pass
 
     def load(self, filepath: str) -> None:
         image = pygame.image.load(filepath)
@@ -54,13 +54,19 @@ class Texture:
         glBindTexture(GL_TEXTURE_2D, self._texture)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR)
 
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image_width, image_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image_data)
 
+        self.unbind()
+
+    def bind(self) -> None:
+        glActiveTexture(GL_TEXTURE0)
+        glBindTexture(GL_TEXTURE_2D, self._texture)
+
+    def unbind(self) -> None:
         glBindTexture(GL_TEXTURE_2D, 0) # Unbind texture
-        pass
 
     def destroy(self) -> None:
         glDeleteTextures(1, (self._texture))
@@ -71,16 +77,32 @@ class Shape:
     _vertex_count: int
     _vao: any
     _vbo: any # Vertex buffer object
+    _texture: Union[Texture, None] = None
 
-    def __init__(self):
-        pass
+    def __init__(self, vertices: list[Vertex], texture: Union[Texture, None] = None):
+        self._vertices = vertices
+        self._texture = texture
 
-    def load(self, **kwargs):
-        pass
+        self.create_vertex_buf()
+        self._vao = glGenVertexArrays(1)
+        glBindVertexArray(self._vao)
+        self._vbo = glGenBuffers(1)
+        glBindBuffer(GL_ARRAY_BUFFER, self._vbo)
+        glBufferData(GL_ARRAY_BUFFER, self._vertex_buf.nbytes, self._vertex_buf, GL_STATIC_DRAW)
+        glEnableVertexAttribArray(0)
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, VERTEX_SIZE_BYTES, ctypes.c_void_p(POSITION_OFFSET))
+        glEnableVertexAttribArray(1)
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, VERTEX_SIZE_BYTES, ctypes.c_void_p(TEXTURE_OFFSET))
 
     def draw(self):
+        if self._texture != None:
+            self._texture.bind()
+
         glBindVertexArray(self._vao)
         glDrawArrays(GL_TRIANGLES, 0, self._vertex_count)
+
+        if self._texture != None:
+            self._texture.unbind()
 
     def create_vertex_buf(self) -> None:
         self._vertex_count = len(self._vertices)
@@ -92,23 +114,11 @@ class Shape:
 
 
 class TestTriangle(Shape): 
-    def __init__(self):
-        self._vertices = [
-            (-0.5, -0.5, 0.0, 1.0, 0.0, 0.0),
-            (0.5,  -0.5, 0.0, 0.0, 1.0, 0.0),
-            (0.0,  0.5,  0.0, 0.0, 0.0, 1.0),
-        ]
-        self.create_vertex_buf()
-
-        self._vao = glGenVertexArrays(1)
-        glBindVertexArray(self._vao)
-        self._vbo = glGenBuffers(1)
-        glBindBuffer(GL_ARRAY_BUFFER, self._vbo)
-        glBufferData(GL_ARRAY_BUFFER, self._vertex_buf.nbytes, self._vertex_buf, GL_STATIC_DRAW)
-        glEnableVertexAttribArray(0)
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, VERTEX_SIZE_BYTES, ctypes.c_void_p(POSITION_OFFSET))
-        glEnableVertexAttribArray(1)
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, VERTEX_SIZE_BYTES, ctypes.c_void_p(COLOR_OFFSET))        
+    def __init__(self, texture: Union[Texture, None] = None):
+        vertex1: Vertex = Vertex(-0.5, -0.5, 0.0, 0.0, 1.0)
+        vertex2: Vertex = Vertex(0.5,  -0.5, 0.0, 1.0, 1.0)
+        vertex3: Vertex = Vertex(0.0,  0.5,  0.0, 0.5, 0.0)
+        super().__init__([vertex1, vertex2, vertex3], texture)
 
 
 class Deformer:

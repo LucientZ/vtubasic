@@ -2,7 +2,8 @@ import pygame
 import sys
 from rendering import *
 from OpenGL.GL import *
-
+import time
+from threading import Thread
 
 class App:
     _window_width: int = 640
@@ -12,8 +13,11 @@ class App:
     _running: bool = False
     _program: Program
     _shapes: list[Shape] = []
+    _physics_thread: Union[Thread, None]
 
     def __init__(self):
+        self._physics_thread = None
+        
         # Initializes Window
         pygame.init()
         pygame.display.set_mode((self._window_width, self._window_height), pygame.OPENGL | pygame.DOUBLEBUF | pygame.RESIZABLE)
@@ -24,11 +28,16 @@ class App:
         self._program = Program()
         self._program.compile_shaders("resources/vertex_shader.glsl", "resources/fragment_shader.glsl")
         self._program.bind()
-        self._shapes.append(TestTriangle())
+
+        # Testing texture
+        self._shapes.append(TestTriangle(Texture("models/hiyori_free_en/runtime/hiyori_free_t08.2048/texture_00.png")))
 
     def run(self) -> None:
         self._running = True
+        self._physics_thread = Thread(target=self.physics_loop)
+        self._physics_thread.start()
         self.render_loop()
+        
 
     def set_bg_color(self, r: float, g: float, b: float, a: float) -> None:
         glClearColor(r, g, b, a)
@@ -60,8 +69,15 @@ class App:
             self._clock.tick(self._framerate)
 
         self.quit()
+    
+    def physics_loop(self) -> None:
+        while(self._running):
+            time.sleep(1)
+            print("physics")
 
     def quit(self):
+        if self._physics_thread != None:
+            self._physics_thread.join()
         for shape in self._shapes:
             shape.destroy()
         self._program.destroy()
