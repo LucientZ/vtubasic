@@ -1,5 +1,6 @@
 import pygame
 import sys
+from rendering import *
 from OpenGL.GL import *
 
 
@@ -9,20 +10,30 @@ class App:
     _framerate: int = 60
     _clock: pygame.time.Clock
     _running: bool = False
+    _program: Program
+    _shapes: list[Shape] = []
 
     def __init__(self):
         # Initializes Window
         pygame.init()
         pygame.display.set_mode((self._window_width, self._window_height), pygame.OPENGL | pygame.DOUBLEBUF | pygame.RESIZABLE)
         self._clock = pygame.time.Clock()
-        glClearColor(0.1, 0.2, 0.2, 1)
+        self.set_bg_color(0.0, 1.0, 0.0, 1.0)
+        pygame.display.set_caption("VTubasic")
 
-    def run(self):
+        self._program = Program()
+        self._program.compile_shaders("resources/vertex_shader.glsl", "resources/fragment_shader.glsl")
+        self._program.bind()
+        self._shapes.append(TestTriangle())
+
+    def run(self) -> None:
         self._running = True
-        self.renderLoop()
+        self.render_loop()
 
+    def set_bg_color(self, r: float, g: float, b: float, a: float) -> None:
+        glClearColor(r, g, b, a)
 
-    def renderLoop(self):
+    def render_loop(self) -> None:
         """
         Renders the application
         """
@@ -37,6 +48,13 @@ class App:
             
             # Update display
             glClear(GL_COLOR_BUFFER_BIT)
+
+            # Start drawing stuff
+            self._program.bind()
+            for shape in self._shapes:
+                shape.draw()
+            self._program.unbind()
+            
             pygame.display.flip()
 
             self._clock.tick(self._framerate)
@@ -44,6 +62,7 @@ class App:
         self.quit()
 
     def quit(self):
+        for shape in self._shapes:
+            shape.destroy()
+        self._program.destroy()
         pygame.quit()
-
-                    
