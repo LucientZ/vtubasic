@@ -49,7 +49,6 @@ class Texture:
         image = pygame.transform.flip(pygame.image.load(filepath).convert_alpha(), False, True)
         image_width, image_height = image.get_rect().size
         image_data = pygame.image.tostring(image, "RGBA")
-
         self._texture = glGenTextures(1)
         glBindTexture(GL_TEXTURE_2D, self._texture)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)

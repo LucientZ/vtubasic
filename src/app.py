@@ -31,7 +31,7 @@ class RuntimeApp:
 
         # Testing texture
         self._shapes = []
-        self._shapes.append(TestSquare(Texture("models/Luci/textures/kwismas.png")))
+        self._shapes.append(TestTriangle(Texture("models/Luci/textures/kwismas.png")))
 
     def run(self) -> None:
         self._running = True
