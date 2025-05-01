@@ -5,14 +5,14 @@ from OpenGL.GL import *
 import time
 from threading import Thread
 
-class App:
+class RuntimeApp:
     _window_width: int = 640
     _window_height: int = 480
     _framerate: int = 60
     _clock: pygame.time.Clock
     _running: bool = False
     _program: Program
-    _shapes: list[Shape] = []
+    _shapes: list[Shape]
     _physics_thread: Union[Thread, None]
 
     def __init__(self):
@@ -30,7 +30,8 @@ class App:
         self._program.bind()
 
         # Testing texture
-        self._shapes.append(TestTriangle(Texture("models/hiyori_free_en/runtime/hiyori_free_t08.2048/texture_00.png")))
+        self._shapes = []
+        self._shapes.append(TestSquare(Texture("models/Luci/textures/kwismas.png")))
 
     def run(self) -> None:
         self._running = True
@@ -38,7 +39,6 @@ class App:
         self._physics_thread.start()
         self.render_loop()
         
-
     def set_bg_color(self, r: float, g: float, b: float, a: float) -> None:
         glClearColor(r, g, b, a)
 
@@ -50,23 +50,26 @@ class App:
             print("Render loop called while program not running", file=sys.stderr)
             return
         
-        while(self._running):
-            for event in pygame.event.get():
-                if(event.type == pygame.QUIT):
-                    self._running = False
-            
-            # Update display
-            glClear(GL_COLOR_BUFFER_BIT)
+        try:
+            while(self._running):
+                for event in pygame.event.get():
+                    if(event.type == pygame.QUIT):
+                        self._running = False
 
-            # Start drawing stuff
-            self._program.bind()
-            for shape in self._shapes:
-                shape.draw()
-            self._program.unbind()
-            
-            pygame.display.flip()
+                # Update display
+                glClear(GL_COLOR_BUFFER_BIT)
 
-            self._clock.tick(self._framerate)
+                # Start drawing stuff
+                self._program.bind()
+                for shape in self._shapes:
+                    shape.draw()
+                self._program.unbind()
+
+                pygame.display.flip()
+
+                self._clock.tick(self._framerate)
+        except:
+            self._running = False
 
         self.quit()
     
@@ -82,3 +85,9 @@ class App:
             shape.destroy()
         self._program.destroy()
         pygame.quit()
+
+class EditorApp:
+    _window_width: int = 640
+    _window_height: int = 480
+    _framerate: int = 60
+    _clock: pygame.time.Clock

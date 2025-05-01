@@ -4,5 +4,5 @@ from app import *
 
 
 if __name__ == "__main__":
-    app: App = App()
+    app: RuntimeApp = RuntimeApp()
     app.run()
