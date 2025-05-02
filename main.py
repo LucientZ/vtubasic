@@ -1,4 +1,4 @@
-import sys
+import sys, os
 sys.path.insert(0, "./src")
 from app import *
 from prompt import *

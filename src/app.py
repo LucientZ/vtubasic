@@ -1,8 +1,9 @@
 import pygame
-import sys
+import sys, os
 from rendering import *
+from prompt import *
+from model import *
 from OpenGL.GL import *
-import time
 from threading import Thread
 
 class App:
@@ -75,20 +76,16 @@ class App:
 
 class RuntimeApp(App):
     _physics_thread: Union[Thread, None]
-
+    
     def __init__(self):
         super().__init__()
-        # Testing texture
-        test_shape = TestSquare(Texture("models/Luci/textures/kwismas.png"))
-        self._shapes.append(test_shape)
-        test_shape.add_dynamic_deformer(ClothDeformer(test_shape, 
-        [
-            0,
-            1
-        ], 
-        [
-            numpy.array([0.0,-1.0,0.0])
-        ]))
+        prompts = [
+            (directory, lambda: f"models/{directory}")
+            for directory in os.listdir("models")
+        ]
+        model_config_filename = ask_prompt(prompts, "Choose a model to use:")
+        model = Model(model_config_filename)
+        self._shapes = model.get_layers()
 
     def run(self) -> None:
         self._running = True

@@ -1,7 +1,7 @@
 from typing import Any
 
-def ask_prompt(prompts: list[tuple[str, callable]]) -> Any:
-    print("Pick an option:")
+def ask_prompt(prompts: list[tuple[str, callable]], main_prompt: str = "Pick an option:") -> Any:
+    print(main_prompt)
     for i, (prompt, _) in enumerate(prompts):
         print(f"{i+1}. {prompt}")
 

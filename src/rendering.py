@@ -77,7 +77,7 @@ class Texture:
 class Deformer():
     def __init__(self):
         pass
-    def apply(self) -> None:
+    def apply(self, h = 0.0) -> None:
         """
         Applies the deformer's rules to the original shape
         """
@@ -317,7 +317,6 @@ class ClothDeformer(Deformer):
             if not spring.p1.fixed:
                 spring.p1.x += lambda_value * w1 * gradC1
 
-
         # Update velocities
         for index in self._dynamic_vertex_indices:
             particle = self._particles[index]
@@ -328,15 +327,16 @@ class ClothDeformer(Deformer):
             particle = self._particles[index]
             self._shape.set_vertex(index, particle.x)
 
-
-
-class TestSquare(Shape):
-    def __init__(self, texture: Union[Texture, None] = None):
+class ImageShape(Shape):
+    """
+    Image texture that spans the entire screen
+    """
+    def __init__(self, texture: Union[Texture, None] = None, z_depth: float =  0.0):
         vertices = [
-            Vertex(-1.0, -1.0, 0.0, 0.0, 0.0),
-            Vertex(1.0, -1.0, 0.0, 1.0, 0.0),
-            Vertex(-1.0, 1.0, 0.0, 0.0, 1.0),
-            Vertex(1.0, 1.0, 0.0, 1.0, 1.0),
+            Vertex(-1.0, -1.0, z_depth, 0.0, 0.0),
+            Vertex(1.0, -1.0, z_depth, 1.0, 0.0),
+            Vertex(-1.0, 1.0, z_depth, 0.0, 1.0),
+            Vertex(1.0, 1.0, z_depth, 1.0, 1.0),
         ]
 
         indices = [

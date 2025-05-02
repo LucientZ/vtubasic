@@ -26,8 +26,8 @@
             "texture": "textures/Head.png"
         },
         {
-            "name": "Front Jacket",
-            "texture": "textures/FrontJacket.png"
+            "name": "Front Clothing",
+            "texture": "textures/FrontClothing.png"
         },
         {
             "name": "Left Jacket Arm",
@@ -38,20 +38,12 @@
             "texture": "textures/RightArm.png"
         },
         {
-            "name": "Front T-Shirt",
-            "texture": "textures/FrontTShirt.png"
-        },
-        {
             "name": "Neck",
             "texture": "textures/Neck.png"
         },
         {
-            "name": "Back T-Shirt",
-            "texture": "textures/BackTShirt.png"
-        },
-        {
-            "name": "Back Jacket",
-            "texture": "textures/BackJacket.png"
+            "name": "Back Clothing",
+            "texture": "textures/BackClothing.png"
         },
         {
             "name": "Back Hair",
