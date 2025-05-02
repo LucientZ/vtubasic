@@ -9,29 +9,34 @@ from threading import Thread
 class App:
     _window_width: int = 1280
     _window_height: int = 720
-    _framerate: int = 30
+    _framerate: int = 60
     _clock: pygame.time.Clock
     _running: bool = False
     _program: Program
     _shapes: list[Shape]
     _threads: list[Thread]
-    _model: Model
+    _model: Union[Model, None]
     _normalized_mouse_pos: tuple[float, float] # normalized device coordinates of mouse position
 
     def __init__(self):
         self._physics_thread = None
+
         # Initializes Window
         pygame.init()
         pygame.display.set_mode((self._window_width, self._window_height), pygame.OPENGL | pygame.DOUBLEBUF | pygame.RESIZABLE)
         self._clock = pygame.time.Clock()
-        self.set_bg_color(0.0, 1.0, 0.0, 1.0)
         pygame.display.set_caption("VTubasic")
+
+        # Configure OpenGL
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        glEnable(GL_DEPTH_TEST)
+        self.set_bg_color(0.0, 1.0, 0.0, 1.0)
 
         self._program = Program()
         self._program.compile_shaders("resources/vertex_shader.glsl", "resources/fragment_shader.glsl")
         self._program.bind()
+        self._program.add_uniform("modelView")
         self._shapes = []
         self._threads = []
 
@@ -51,6 +56,7 @@ class App:
             return
         try:
             while(self._running):
+                self.before_render()
                 for event in pygame.event.get():
                     if(event.type == pygame.QUIT):
                         self._running = False
@@ -66,20 +72,36 @@ class App:
                 )
 
                 # Update display
-                glClear(GL_COLOR_BUFFER_BIT)
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
                 # Start drawing stuff
                 self._program.bind()
                 for shape in self._shapes:
-                    shape.draw()
+                    shape.draw(self._program)
+
+                if self._model != None:
+                    self._model.draw(self._program)
                 self._program.unbind()
 
                 pygame.display.flip()
                 self._clock.tick(self._framerate)
+                self.after_render()
         except KeyboardInterrupt:
             self._running = False
 
         self.quit()
+
+    def before_render(self):
+        """
+        Override this to put stuff before each render
+        """
+        pass
+
+    def after_render(self):
+        """
+        Override this to put stuff after each render
+        """
+        pass
 
     def load_model(self, directory_path: str):
         model = Model(directory_path)
@@ -101,18 +123,16 @@ class RuntimeApp(App):
         super().__init__()
 
     def run(self) -> None:
-        self._shapes = self._model.get_layers()
         self._running = True
-        physics_thread = Thread(target=self.physics_loop)
-        self._threads.append(physics_thread)
-        physics_thread.start()
         super().run()
 
-    def physics_loop(self) -> None:
-        while(self._running):
-            for shape in self._shapes:
-                seconds = self._physics_clock.tick(self._framerate) / 1000
-                shape.apply_dynamic_deformers(seconds)
+    def after_render(self):
+        self.do_physics()
+
+    def do_physics(self) -> None:
+        for shape in self._shapes:
+            seconds = self._physics_clock.tick(self._framerate) / 1000
+            shape.apply_dynamic_deformers(seconds)
 
     def quit(self) -> None:
         if self._physics_thread != None:

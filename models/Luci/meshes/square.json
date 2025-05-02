@@ -9,40 +9,44 @@
   ],
   "vertices": [
     {
-      "vertex": [
+      "pos": [
         -1.0,
-        -1.0,
-        0.0,
+        -1.0
+      ],
+      "texPos": [
         0.0,
         0.0
       ],
       "dynamic": false
     },
     {
-      "vertex": [
+      "pos": [
         1.0,
-        -1.0,
-        0.0,
+        -1.0
+      ],
+      "texPos": [
         1.0,
         0.0
       ],
       "dynamic": false
     },
     {
-      "vertex": [
+      "pos": [
         -1.0,
-        1.0,
-        0.0,
+        1.0
+      ],
+      "texPos": [
         0.0,
         1.0
       ],
       "dynamic": false
     },
     {
-      "vertex": [
+      "pos": [
         1.0,
-        1.0,
-        0.0,
+        1.0
+      ],
+      "texPos": [
         1.0,
         1.0
       ],

@@ -61,5 +61,27 @@
             "texture": "textures/BackHair.png",
             "mesh": "meshes/square.json"
         }
-    ]
+    ],
+    "hierarchy": {
+        "root": "Front Clothing",
+        "relations": {
+            "Neck": [
+                "Head"
+            ],
+            "Head": [
+                "Front Hair",
+                "Front Bangs",
+                "Eyes",
+                "Mouth",
+                "Nose",
+                "Back Hair"
+            ],
+            "Front Clothing": [
+                "Neck",
+                "Left Jacket Arm",
+                "Right Jacket Arm",
+                "Back Clothing"
+            ]
+        }
+    }
 }

@@ -4,13 +4,14 @@ from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader, ShaderProgram
 from collections import namedtuple
 from typing import Union, Any
-import json
+from math import sin, cos
 
 class Program:
     _shader: ShaderProgram
+    _uniform_variables: dict[str, Any]
 
     def __init__(self):
-        pass
+        self._uniform_variables = {}
     
     def compile_shaders(self, vertex_filepath: str, fragment_filepath: str) -> None:
         vertex_src: str
@@ -25,6 +26,12 @@ class Program:
             compileShader(vertex_src, GL_VERTEX_SHADER),
             compileShader(fragment_src, GL_FRAGMENT_SHADER)
         )
+
+    def add_uniform(self, name: str):
+        self._uniform_variables[name] = glGetUniformLocation(self._shader, name)
+
+    def get_uniform(self, name: str) -> Any:
+        return self._uniform_variables[name]
 
     def bind(self):
         glUseProgram(self._shader)
@@ -43,6 +50,57 @@ TEXTURE_OFFSET = 12
 
 def vertex_to_numpy_array(vertex: Vertex):
     return numpy.array([vertex.x, vertex.y, vertex.z])
+
+class MatrixStack:
+    _stack: list[numpy.matrix]
+
+    def __init__(self):
+        top_matrix = numpy.identity(3, dtype=numpy.float32)
+        self._stack = [top_matrix]
+
+    def get_top_matrix(self):
+        return self._stack[-1]
+
+    def translate(self, x: float, y: float):
+        translation_matrix = numpy.matrix(
+            [[1.0, 0.0, x],
+             [0.0, 1.0, y],
+             [0.0, 0.0, 1.0]],
+            dtype=numpy.float32
+        )
+        self._stack[-1] = translation_matrix * self._stack[-1]
+
+    def rotate(self, theta_x = 0.0, theta_y = 0.0, theta_z = 0.0):
+        """
+        Rotates the matrix in radians
+        """
+        x_rotation_matrix = numpy.matrix(
+            [[1.0, 0.0,          0.0],
+             [0.0, cos(theta_x), -sin(theta_x)],
+             [0.0, sin(theta_x), cos(theta_x)]],
+            dtype=numpy.float32
+        )
+        y_rotation_matrix = numpy.matrix(
+            [[cos(theta_y),  0.0, sin(theta_y)],
+             [0.0,           1.0, 0.0],
+             [-sin(theta_y), 0.0, cos(theta_y)]],
+            dtype=numpy.float32
+        )
+        z_rotation_matrix = numpy.matrix(
+            [[cos(theta_z),  -sin(theta_z), 0.0],
+             [sin(theta_z),   cos(theta_z), 0.0],
+             [0.0,            0.0,          1.0]],
+            dtype=numpy.float32
+        )
+        self._stack[-1] = x_rotation_matrix * y_rotation_matrix * z_rotation_matrix * self._stack[-1]
+
+    def push_matrix(self) -> None:
+        self._stack.append(self._stack[-1])
+
+    def pop_matrix(self) -> numpy.matrix:
+        if(len(self._stack) <= 1):
+            raise Exception("Matrix stack cannot pop anymore matrices")
+        return self._stack.pop()
 
 class Texture:
     _texture: Any
@@ -96,8 +154,12 @@ class Shape:
     _texture: Union[Texture, None]
     _static_deformers: list[Deformer] # Deformers which temporarily modify vertices. These send information to the GPU
     _dynamic_deformers: list[Deformer] # Deformers which permanently modify vertices. These mutate the given shape
+    _child_shapes: list["Shape"] # Nested shapes to apply transformations to
+    _name: str
+    _translation: list[float]
+    _transformation_matrix: numpy.matrix
 
-    def __init__(self, vertices: list[Vertex], triangle_indices: list[int], texture: Texture = None):
+    def __init__(self, vertices: list[Vertex], triangle_indices: list[int], texture: Texture = None, name: str = None):
         """
         Creates a Shape object with given parameters
         
@@ -115,16 +177,20 @@ class Shape:
         self._vbo = glGenBuffers(1)
         self._static_deformers = []
         self._dynamic_deformers = []
+        self._child_shapes = []
+        self._translation = [0.0, 0.0]
+        self._rotation = [0.0, 0.0, 0.0]
+        self._transformation_matrix = numpy.identity(3, dtype=numpy.float32)
+        self._name = name if name != None else "Shape"
 
         self._ebo = glGenBuffers(1)
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self._ebo)
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, self._index_buf.nbytes, self._index_buf, GL_STATIC_DRAW)
 
-    def draw(self):
+    def draw(self, program: Program):
         if self._texture != None:
             self._texture.bind()
-
-        # Create and bind buffer data
+        # Create and bind buffer data to GPU
         self.create_vertex_buffers()
         glBindVertexArray(self._vao)
         glBindBuffer(GL_ARRAY_BUFFER, self._vbo)
@@ -134,13 +200,29 @@ class Shape:
         glEnableVertexAttribArray(1)
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, VERTEX_SIZE_BYTES, ctypes.c_void_p(TEXTURE_OFFSET))
 
-        self.apply_static_deformers()
+        # Send transformation data to GPU
+        glUniformMatrix3fv(
+            program.get_uniform("modelView"),
+            1,
+            GL_TRUE,
+            self._transformation_matrix
+        )
 
+        self.apply_static_deformers()
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self._ebo)
         glDrawElements(GL_TRIANGLES, len(self._triangle_indices), GL_UNSIGNED_INT, ctypes.c_void_p(0))
 
         if self._texture != None:
             self._texture.unbind()
+
+    def apply_transformation_hierarchy(self, model_view: MatrixStack):
+        model_view.push_matrix()
+        model_view.rotate(self._rotation[0], self._rotation[1], self._rotation[2])
+        model_view.translate(self._translation[0], self._translation[1])
+        self._transformation_matrix = model_view.get_top_matrix()
+        for shape in self._child_shapes:
+            shape.apply_transformation_hierarchy(model_view)
+        model_view.pop_matrix()
 
     def create_vertex_buffers(self) -> None:
         self._vertex_count = len(self._vertices)
@@ -166,6 +248,12 @@ class Shape:
 
     def add_dynamic_deformer(self, deformer: Deformer):
         self._dynamic_deformers.append(deformer)
+
+    def add_child_shape(self, shape: "Shape"):
+        self._child_shapes.append(shape)
+
+    def set_program(self, program: Program):
+        self._program = program
 
     def get_triangle_indices(self) -> list[int]:
         return self._triangle_indices
@@ -199,6 +287,9 @@ class Shape:
         glDeleteVertexArrays(1, (self._vao,))
         glDeleteBuffers(1, (self._vbo,))
         glDeleteBuffers(1, (self._ebo,))
+
+    def __str__(self):
+        return self._name
 
 class Particle:
     damping: float
