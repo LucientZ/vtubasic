@@ -1,0 +1,61 @@
+{
+    "name": "Luci",
+    "parts": [
+        {
+            "name": "Front Hair",
+            "texture": "textures/FrontHair.png"
+        },
+        {
+            "name": "Front Bangs",
+            "texture": "textures/FrontBangs.png"
+        },
+        {
+            "name": "Eyes",
+            "texture": "textures/Eyes.png"
+        },
+        {
+            "name": "Mouth",
+            "texture": "textures/Mouth.png"
+        },
+        {
+            "name": "Nose",
+            "texture": "textures/Nose.png"
+        },
+        {
+            "name": "Head",
+            "texture": "textures/Head.png"
+        },
+        {
+            "name": "Front Jacket",
+            "texture": "textures/FrontJacket.png"
+        },
+        {
+            "name": "Left Jacket Arm",
+            "texture": "textures/LeftArm.png"
+        },
+        {
+            "name": "Right Jacket Arm",
+            "texture": "textures/RightArm.png"
+        },
+        {
+            "name": "Front T-Shirt",
+            "texture": "textures/FrontTShirt.png"
+        },
+        {
+            "name": "Neck",
+            "texture": "textures/Neck.png"
+        },
+        {
+            "name": "Back T-Shirt",
+            "texture": "textures/BackTShirt.png"
+        },
+        {
+            "name": "Back Jacket",
+            "texture": "textures/BackJacket.png"
+        },
+        {
+            "name": "Back Hair",
+            "texture": "textures/BackHair.png"
+        }
+    ]
+}
