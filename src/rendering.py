@@ -4,7 +4,7 @@ from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader, ShaderProgram
 from collections import namedtuple
 from typing import Union, Any
-from dataclasses import dataclass
+import json
 
 class Program:
     _shader: ShaderProgram
@@ -153,13 +153,13 @@ class Shape:
         for deformer in self._static_deformers:
             deformer.apply()
 
-    def apply_dynamic_deformers(self):
+    def apply_dynamic_deformers(self, h = 0.1):
         """
         Mutates the current shape with its dynamic deformers.
         This is used for physics calculations.
         """
         for deformer in self._dynamic_deformers:
-            deformer.apply()
+            deformer.apply(h)
 
     def add_static_deformer(self, deformer: Deformer):
         self._static_deformers.append(deformer)
@@ -331,12 +331,12 @@ class ImageShape(Shape):
     """
     Image texture that spans the entire screen
     """
-    def __init__(self, texture: Union[Texture, None] = None, z_depth: float =  0.0):
+    def __init__(self, texture: Union[Texture, None] = None):
         vertices = [
-            Vertex(-1.0, -1.0, z_depth, 0.0, 0.0),
-            Vertex(1.0, -1.0, z_depth, 1.0, 0.0),
-            Vertex(-1.0, 1.0, z_depth, 0.0, 1.0),
-            Vertex(1.0, 1.0, z_depth, 1.0, 1.0),
+            Vertex(-1.0, -1.0, 0.0, 0.0, 0.0),
+            Vertex(1.0, -1.0, 0.0, 1.0, 0.0),
+            Vertex(-1.0, 1.0, 0.0, 0.0, 1.0),
+            Vertex(1.0, 1.0, 0.0, 1.0, 1.0),
         ]
 
         indices = [

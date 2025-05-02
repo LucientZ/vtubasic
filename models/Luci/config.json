@@ -3,51 +3,63 @@
     "parts": [
         {
             "name": "Front Hair",
-            "texture": "textures/FrontHair.png"
+            "texture": "textures/FrontHair.png",
+            "mesh": "meshes/square.json"
         },
         {
             "name": "Front Bangs",
-            "texture": "textures/FrontBangs.png"
+            "texture": "textures/FrontBangs.png",
+            "mesh": "meshes/square.json"
         },
         {
             "name": "Eyes",
-            "texture": "textures/Eyes.png"
+            "texture": "textures/Eyes.png",
+            "mesh": "meshes/square.json"
         },
         {
             "name": "Mouth",
-            "texture": "textures/Mouth.png"
+            "texture": "textures/Mouth.png",
+            "mesh": "meshes/square.json"
         },
         {
             "name": "Nose",
-            "texture": "textures/Nose.png"
+            "texture": "textures/Nose.png",
+            "mesh": "meshes/square.json"
         },
         {
             "name": "Head",
-            "texture": "textures/Head.png"
+            "texture": "textures/Head.png",
+            "mesh": "meshes/square.json"
         },
         {
             "name": "Front Clothing",
-            "texture": "textures/FrontClothing.png"
+            "texture": "textures/FrontClothing.png",
+            "mesh": "meshes/square.json"
         },
         {
             "name": "Left Jacket Arm",
-            "texture": "textures/LeftArm.png"
+            "texture": "textures/LeftArm.png",
+            "mesh": "meshes/square.json"
         },
         {
             "name": "Right Jacket Arm",
-            "texture": "textures/RightArm.png"
+            "texture": "textures/RightArm.png",
+            "mesh": "meshes/square.json"
         },
         {
             "name": "Neck",
-            "texture": "textures/Neck.png"
+            "texture": "textures/Neck.png",
+            "mesh": "meshes/square.json"
         },
         {
             "name": "Back Clothing",
-            "texture": "textures/BackClothing.png"
+            "texture": "textures/BackClothing.png",
+            "mesh": "meshes/square.json"
         },
         {
             "name": "Back Hair",
-            "texture": "textures/BackHair.png"
+            "texture": "textures/BackHair.png",
+            "mesh": "meshes/square.json"
         }
     ]
 }

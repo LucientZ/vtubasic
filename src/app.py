@@ -1,5 +1,5 @@
 import pygame
-import sys, os
+import sys, time
 from rendering import *
 from prompt import *
 from model import *
@@ -9,11 +9,14 @@ from threading import Thread
 class App:
     _window_width: int = 1280
     _window_height: int = 720
-    _framerate: int = 60
+    _framerate: int = 30
     _clock: pygame.time.Clock
     _running: bool = False
     _program: Program
     _shapes: list[Shape]
+    _threads: list[Thread]
+    _model: Model
+    _normalized_mouse_pos: tuple[float, float] # normalized device coordinates of mouse position
 
     def __init__(self):
         self._physics_thread = None
@@ -30,6 +33,7 @@ class App:
         self._program.compile_shaders("resources/vertex_shader.glsl", "resources/fragment_shader.glsl")
         self._program.bind()
         self._shapes = []
+        self._threads = []
 
     def run(self) -> None:
         self._running = True
@@ -51,6 +55,16 @@ class App:
                     if(event.type == pygame.QUIT):
                         self._running = False
 
+                # Set user input values
+                window_info = pygame.display.Info()
+                self._window_height = window_info.current_h
+                self._window_width = window_info.current_w
+                mouse_pos = pygame.mouse.get_pos()
+                self._normalized_mouse_pos = (
+                    mouse_pos[0] / self._window_width,
+                    mouse_pos[1] / self._window_height
+                )
+
                 # Update display
                 glClear(GL_COLOR_BUFFER_BIT)
 
@@ -61,43 +75,44 @@ class App:
                 self._program.unbind()
 
                 pygame.display.flip()
-
                 self._clock.tick(self._framerate)
         except KeyboardInterrupt:
             self._running = False
 
         self.quit()
+
+    def load_model(self, directory_path: str):
+        model = Model(directory_path)
+        self._model = model
     
     def quit(self):
         for shape in self._shapes:
             shape.destroy()
+        for thread in self._threads:
+            thread.join()
         self._program.destroy()
         pygame.quit()
 
 class RuntimeApp(App):
-    _physics_thread: Union[Thread, None]
-    
+    _physics_clock: pygame.time.Clock
+
     def __init__(self):
+        self._physics_clock = pygame.time.Clock()
         super().__init__()
-        prompts = [
-            (directory, lambda: f"models/{directory}")
-            for directory in os.listdir("models")
-        ]
-        model_config_filename = ask_prompt(prompts, "Choose a model to use:")
-        model = Model(model_config_filename)
-        self._shapes = model.get_layers()
 
     def run(self) -> None:
+        self._shapes = self._model.get_layers()
         self._running = True
-        self._physics_thread = Thread(target=self.physics_loop)
-        self._physics_thread.start()
+        physics_thread = Thread(target=self.physics_loop)
+        self._threads.append(physics_thread)
+        physics_thread.start()
         super().run()
 
     def physics_loop(self) -> None:
         while(self._running):
             for shape in self._shapes:
-                shape.apply_dynamic_deformers()
-        
+                seconds = self._physics_clock.tick(self._framerate) / 1000
+                shape.apply_dynamic_deformers(seconds)
 
     def quit(self) -> None:
         if self._physics_thread != None:
@@ -105,4 +120,9 @@ class RuntimeApp(App):
         super().quit()
 
 class EditorApp(App):
-    pass
+    _layers: list[Shape]
+    def __init__(self):
+        super().__init__()
+
+    def run(self):
+        super().run()
