@@ -53,6 +53,12 @@ class Model:
                                     deformer_config["alpha"],
                                     deformer_config["mass"]
                                 ))
+                            elif deformer_config["type"] == "position":
+                                shape.add_static_deformer(PositionDeformer(
+                                    shape,
+                                    (deformer_config["xLowerBound"], deformer_config["xUpperBound"]),
+                                    (deformer_config["yLowerBound"], deformer_config["yUpperBound"])
+                                ))
 
         
         self._root_shape = self._layers[self._config["hierarchy"]["root"]]

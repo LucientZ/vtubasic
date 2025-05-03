@@ -10,27 +10,31 @@
             "name": "Front Bangs",
             "texture": "textures/FrontBangs.png",
             "mesh": "meshes/testFrontBangs.json",
-            "deformers": ["deformers/testFrontBangs.json"]
+            "deformers": ["deformers/testFrontBangs.json", "deformers/headPosition.json"]
         },
         {
             "name": "Eyes",
             "texture": "textures/Eyes.png",
-            "mesh": "meshes/square.json"
+            "mesh": "meshes/square.json",
+            "deformers": ["deformers/eyePosition.json"]
         },
         {
             "name": "Mouth",
             "texture": "textures/Mouth.png",
-            "mesh": "meshes/square.json"
+            "mesh": "meshes/square.json",
+            "deformers": ["deformers/mouthPosition.json"]
         },
         {
             "name": "Nose",
             "texture": "textures/Nose.png",
-            "mesh": "meshes/square.json"
+            "mesh": "meshes/square.json",
+            "deformers": ["deformers/nosePosition.json"]
         },
         {
             "name": "Head",
             "texture": "textures/Head.png",
-            "mesh": "meshes/square.json"
+            "mesh": "meshes/square.json",
+            "deformers": ["deformers/headPosition.json"]
         },
         {
             "name": "Front Clothing",
@@ -61,7 +65,7 @@
             "name": "Back Hair",
             "texture": "textures/BackHair.png",
             "mesh": "meshes/testBackHair.json",
-            "deformers": ["deformers/testBackHair.json"]
+            "deformers": ["deformers/testBackHair.json", "deformers/backHairPosition.json"]
         }
     ],
     "hierarchy": {

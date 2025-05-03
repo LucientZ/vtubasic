@@ -136,9 +136,6 @@ class Deformer():
     """
     Interface for deformers which change the shape of a model
     """
-    def __init__(self):
-        pass
-
     def apply(self, *args, **kwargs) -> None:
         """
         Applies the deformer's rules to the original shape
@@ -232,20 +229,33 @@ class Shape:
         model_view.push_matrix()
         model_view.rotate(self._rotation[0], self._rotation[1], self._rotation[2])
         model_view.translate(self._translation[0], self._translation[1])
+        previous_matrix = self._transformation_matrix
         self._transformation_matrix = model_view.get_top_matrix()
         for shape in self._child_shapes:
             shape.apply_transformation_hierarchy(model_view)
+
+        # Apply potential forces to each dynamic deformer
+        for deformer in self._dynamic_deformers:
+            if isinstance(deformer, ClothDeformer):
+                delta_transform: numpy.matrix = self._transformation_matrix - previous_matrix
+                scaling_factor = 300 # Used to make forces stronger
+                force = numpy.array([
+                    scaling_factor * (delta_transform.item((0, 0)) + delta_transform.item((0, 1)) + delta_transform.item((0, 2))),
+                    scaling_factor * (delta_transform.item((1, 0)) + delta_transform.item((1, 1)) + delta_transform.item((1, 2))),
+                    0.0
+                ])
+                deformer.set_force(1, force)
         model_view.pop_matrix()
 
     def create_vertex_buffers(self) -> None:
         self._vertex_buf = numpy.array(self._vertices, dtype=numpy.float32).flatten()
 
-    def apply_static_deformers(self):
+    def apply_static_deformers(self, **kwargs):
         """
         Creates static information sent to the GPU.
         """
         for deformer in self._static_deformers:
-            deformer.apply()
+            deformer.apply(**kwargs)
 
     def apply_dynamic_deformers(self, h = 0.1):
         """
@@ -272,6 +282,10 @@ class Shape:
     
     def get_vertex(self, index: int) -> Vertex:
         return self._vertices[index]
+    
+    def set_translation(self, translation: tuple[int, int]):
+        self._translation[0] = translation[0]
+        self._translation[1] = translation[1]
 
     def set_vertex(self, index: int, vertex: Union[Vertex, numpy.ndarray]) -> None:
         if isinstance(vertex, Vertex):
@@ -451,6 +465,27 @@ class ClothDeformer(Deformer):
             particle.p = particle.x0.copy()
             particle.v = particle.v0.copy()
         
+class PositionDeformer(Deformer):
+    _x_bounds: tuple[float, float]
+    _y_bounds: tuple[float, float]
+    _shape: Shape
+
+    def __init__(self,
+                shape: Shape,
+                x_bounds: tuple[float, float],
+                y_bounds: tuple[float, float]):
+        self._x_bounds = x_bounds
+        self._y_bounds = y_bounds
+        self._shape = shape
+
+    def apply(self, **kwargs):
+        mouse_pos = kwargs["mouse_pos"]
+        follow_mouse = kwargs["follow_mouse"]
+        if follow_mouse:
+            # Convert normalized device coordinates with a range [-1.0,1.0] to specified range
+            x_value = (mouse_pos[0] + 1.0) / 2.0 * (self._x_bounds[1] - self._x_bounds[0]) + self._x_bounds[0]
+            y_value = (mouse_pos[1] + 1.0) / 2.0 * (self._y_bounds[1] - self._y_bounds[0]) + self._y_bounds[0]
+            self._shape.set_translation((x_value, y_value))
 
 class ImageShape(Shape):
     """

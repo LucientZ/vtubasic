@@ -124,8 +124,10 @@ class App:
 
 class RuntimeApp(App):
     _physics_clock: pygame.time.Clock
+    _follow_mouse: bool
 
     def __init__(self):
+        self._follow_mouse = False
         self._physics_clock = pygame.time.Clock()
         super().__init__()
 
@@ -137,6 +139,10 @@ class RuntimeApp(App):
         for event in pygame.event.get():
             if(event.type == pygame.QUIT):
                 self._running = False
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1: # left mouse down
+                self._follow_mouse = True
+            elif event.type == pygame.MOUSEBUTTONUP and event.button == 1: # left mouse up
+                self._follow_mouse = False
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_w:
                     self._draw_wireframe = not self._draw_wireframe
@@ -147,11 +153,11 @@ class RuntimeApp(App):
     def after_render(self):
         seconds = self._physics_clock.tick() / 1000
         for shape in self._shapes:
-            shape.apply_static_deformers()
+            shape.apply_static_deformers(mouse_pos=self._ndc_mouse_pos, follow_mouse=self._follow_mouse)
             shape.apply_dynamic_deformers(seconds)
         
         for shape in self._model.get_layers():
-            shape.apply_static_deformers()
+            shape.apply_static_deformers(mouse_pos=self._ndc_mouse_pos, follow_mouse=self._follow_mouse)
             shape.apply_dynamic_deformers(seconds)
 
 
