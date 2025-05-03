@@ -254,6 +254,8 @@ class Shape:
         """
         Creates static information sent to the GPU.
         """
+        self._translation = [0.0,0.0,0.0]
+        self._rotation = [0.0,0.0,0.0]
         for deformer in self._static_deformers:
             deformer.apply(**kwargs)
 
@@ -283,9 +285,9 @@ class Shape:
     def get_vertex(self, index: int) -> Vertex:
         return self._vertices[index]
     
-    def set_translation(self, translation: tuple[int, int]):
-        self._translation[0] = translation[0]
-        self._translation[1] = translation[1]
+    def translate(self, translation: tuple[float, float]):
+        self._translation[0] += translation[0]
+        self._translation[1] += translation[1]
 
     def set_vertex(self, index: int, vertex: Union[Vertex, numpy.ndarray]) -> None:
         if isinstance(vertex, Vertex):
@@ -478,14 +480,11 @@ class PositionDeformer(Deformer):
         self._y_bounds = y_bounds
         self._shape = shape
 
-    def apply(self, **kwargs):
-        mouse_pos = kwargs["mouse_pos"]
-        follow_mouse = kwargs["follow_mouse"]
-        if follow_mouse:
-            # Convert normalized device coordinates with a range [-1.0,1.0] to specified range
-            x_value = (mouse_pos[0] + 1.0) / 2.0 * (self._x_bounds[1] - self._x_bounds[0]) + self._x_bounds[0]
-            y_value = (mouse_pos[1] + 1.0) / 2.0 * (self._y_bounds[1] - self._y_bounds[0]) + self._y_bounds[0]
-            self._shape.set_translation((x_value, y_value))
+    def apply(self, mouse_pos: tuple[float, float] = (0, 0)):
+        # Convert normalized device coordinates with a range [-1.0,1.0] to specified range
+        x_value = (mouse_pos[0] + 1.0) / 2.0 * (self._x_bounds[1] - self._x_bounds[0]) + self._x_bounds[0]
+        y_value = (mouse_pos[1] + 1.0) / 2.0 * (self._y_bounds[1] - self._y_bounds[0]) + self._y_bounds[0]
+        self._shape.translate((x_value, y_value))
 
 class ImageShape(Shape):
     """

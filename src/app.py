@@ -153,11 +153,11 @@ class RuntimeApp(App):
     def after_render(self):
         seconds = self._physics_clock.tick() / 1000
         for shape in self._shapes:
-            shape.apply_static_deformers(mouse_pos=self._ndc_mouse_pos, follow_mouse=self._follow_mouse)
+            shape.apply_static_deformers(mouse_pos=self._ndc_mouse_pos)
             shape.apply_dynamic_deformers(seconds)
         
         for shape in self._model.get_layers():
-            shape.apply_static_deformers(mouse_pos=self._ndc_mouse_pos, follow_mouse=self._follow_mouse)
+            shape.apply_static_deformers(mouse_pos=self._ndc_mouse_pos)
             shape.apply_dynamic_deformers(seconds)
 
 
@@ -187,8 +187,10 @@ class EditorApp(App):
             if(event.type == pygame.QUIT):
                 self._running = False
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                print("\"pos\":", self._ndc_mouse_pos)
-                print("\"texPos\":", self._normalized_mouse_pos)
+                print({
+                    "pos": list(self._ndc_mouse_pos),
+                    "texPos": list(self._normalized_mouse_pos)
+                })
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFTBRACKET:
                     self._selected_layer -= 1

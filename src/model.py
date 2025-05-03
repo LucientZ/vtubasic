@@ -8,6 +8,7 @@ class Model:
     _config: dict
     _model_view: MatrixStack
     _model_directory: str
+    _textures: dict[str, Texture]
 
     def __init__(self, model_directory: str):
         self._model_view = MatrixStack()
@@ -18,9 +19,11 @@ class Model:
         with open(f"{model_directory}/config.json", "r") as config_file:
             self._config = json.loads(config_file.read())
 
+        self._textures = {}
         self._layers = {}
         for i, layer_info in enumerate(reversed(self._config["parts"])):
-            texture = Texture(f"{model_directory}/{layer_info["texture"]}")
+            existing_texture = self._textures.get(layer_info["mesh"])
+            texture = existing_texture if existing_texture != None else Texture(f"{model_directory}/{layer_info["texture"]}") 
             with open(f"{model_directory}/{layer_info["mesh"]}", "r") as mesh_file:
                 mesh_config = json.loads(mesh_file.read())
                 triangle_indices = mesh_config["triangles"]

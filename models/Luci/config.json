@@ -10,13 +10,30 @@
             "name": "Front Bangs",
             "texture": "textures/FrontBangs.png",
             "mesh": "meshes/testFrontBangs.json",
-            "deformers": ["deformers/testFrontBangs.json", "deformers/headPosition.json"]
+            "deformers": ["deformers/frontBangsPhysics.json", "deformers/frontBangsPosition.json"]
         },
         {
-            "name": "Eyes",
-            "texture": "textures/Eyes.png",
+            "name": "Eye Lashes",
+            "texture": "textures/Eyelashes.png",
             "mesh": "meshes/square.json",
             "deformers": ["deformers/eyePosition.json"]
+        },
+        {
+            "name": "Left Iris",
+            "texture": "textures/Irises.png",
+            "mesh": "meshes/leftIrisMesh.json",
+            "deformers": ["deformers/leftIrisPosition.json"]
+        },
+        {
+            "name": "Right Iris",
+            "texture": "textures/Irises.png",
+            "mesh": "meshes/rightIrisMesh.json",
+            "deformers": ["deformers/rightIrisPosition.json"]
+        },
+        {
+            "name": "Eye Whites",
+            "texture": "textures/EyeWhites.png",
+            "mesh": "meshes/square.json"
         },
         {
             "name": "Mouth",
@@ -35,6 +52,18 @@
             "texture": "textures/Head.png",
             "mesh": "meshes/square.json",
             "deformers": ["deformers/headPosition.json"]
+        },
+        {
+            "name": "Left Ear",
+            "texture": "textures/Ears.png",
+            "mesh": "meshes/leftEarMesh.json",
+            "deformers": []
+        },
+        {
+            "name": "Right Ear",
+            "texture": "textures/Ears.png",
+            "mesh": "meshes/square.json",
+            "deformers": []
         },
         {
             "name": "Front Clothing",
@@ -65,7 +94,7 @@
             "name": "Back Hair",
             "texture": "textures/BackHair.png",
             "mesh": "meshes/testBackHair.json",
-            "deformers": ["deformers/testBackHair.json", "deformers/backHairPosition.json"]
+            "deformers": ["deformers/backHairPhysics.json", "deformers/backHairPosition.json"]
         }
     ],
     "hierarchy": {
@@ -77,16 +106,23 @@
             "Head": [
                 "Front Hair",
                 "Front Bangs",
-                "Eyes",
                 "Mouth",
                 "Nose",
-                "Back Hair"
+                "Back Hair",
+                "Right Ear",
+                "Left Ear",
+                "Eye Lashes"
             ],
             "Front Clothing": [
                 "Neck",
                 "Left Jacket Arm",
                 "Right Jacket Arm",
                 "Back Clothing"
+            ],
+            "Eye Lashes": [
+                "Eye Whites",
+                "Left Iris",
+                "Right Iris"
             ]
         }
     }
