@@ -145,7 +145,7 @@ class RuntimeApp(App):
                         self._model.reset()
 
     def after_render(self):
-        seconds = self._physics_clock.tick(self._framerate) / 1000
+        seconds = self._physics_clock.tick() / 1000
         for shape in self._shapes:
             shape.apply_static_deformers()
             shape.apply_dynamic_deformers(seconds)

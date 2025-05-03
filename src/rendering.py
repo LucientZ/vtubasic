@@ -138,11 +138,13 @@ class Deformer():
     """
     def __init__(self):
         pass
+
     def apply(self, *args, **kwargs) -> None:
         """
         Applies the deformer's rules to the original shape
         """
         pass
+
     def reset(self):
         pass
     
@@ -402,7 +404,7 @@ class ClothDeformer(Deformer):
                 self._springs.append(SpringConstraint(p0, p1, alpha))
 
     def apply(self, h: float = 0.1):
-        if h > 1.0: # This usually means there was a lag spike
+        if h > 0.1: # This usually means there was a lag spike
             return
         # Apply forces to particles
         for index in self._dynamic_vertex_indices:
