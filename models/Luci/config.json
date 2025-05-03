@@ -60,7 +60,8 @@
         {
             "name": "Back Hair",
             "texture": "textures/BackHair.png",
-            "mesh": "meshes/square.json"
+            "mesh": "meshes/testBackHair.json",
+            "deformers": ["deformers/testBackHair.json"]
         }
     ],
     "hierarchy": {

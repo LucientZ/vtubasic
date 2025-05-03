@@ -181,8 +181,8 @@ class EditorApp(App):
             if(event.type == pygame.QUIT):
                 self._running = False
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                print("position coordinates:", self._ndc_mouse_pos)
-                print("texture coordinates:", self._normalized_mouse_pos)
+                print("\"pos\":", self._ndc_mouse_pos)
+                print("\"texPos\":", self._normalized_mouse_pos)
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFTBRACKET:
                     self._selected_layer -= 1

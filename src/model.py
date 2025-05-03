@@ -46,10 +46,12 @@ class Model:
                                     shape,
                                     deformer_config["dynamicVertices"],
                                     [
-                                        numpy.array([0.0, -deformer_config["gravity"], 0.0])
+                                        numpy.array([0.0, -deformer_config["gravity"], 0.0]),
+                                        numpy.array([0.0, 0.0, 0.0]) # Used for intertial forces
                                     ],
                                     deformer_config["damping"],
-                                    deformer_config["alpha"]
+                                    deformer_config["alpha"],
+                                    deformer_config["mass"]
                                 ))
 
         

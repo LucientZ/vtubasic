@@ -138,7 +138,7 @@ class Deformer():
     """
     def __init__(self):
         pass
-    def apply(self, h = 0.0) -> None:
+    def apply(self, *args, **kwargs) -> None:
         """
         Applies the deformer's rules to the original shape
         """
@@ -307,6 +307,7 @@ class Shape:
 
 class Particle:
     damping: float
+    mass: float
     x0: numpy.ndarray # Initial position
     v0: numpy.ndarray # Initial velocity
     x: numpy.ndarray # Current Position
@@ -314,7 +315,7 @@ class Particle:
     v: numpy.ndarray # Current velocity
     fixed: bool
 
-    def __init__(self, damping: float, position: Vertex, fixed: bool = True):
+    def __init__(self, damping: float, position: Vertex, mass: float, fixed: bool = True):
         self.damping = damping
         self.x0 = vertex_to_numpy_array(position)
         self.x = vertex_to_numpy_array(position)
@@ -322,6 +323,7 @@ class Particle:
         self.v0 = numpy.array([0.0,0.0,0.0])
         self.v = numpy.array([0.0,0.0,0.0])
         self.fixed = fixed
+        self.mass = mass
 
 class SpringConstraint:
     alpha: float
@@ -342,7 +344,7 @@ class ClothDeformer(Deformer):
     This deformer mutates the given shape
     """
     _dynamic_vertex_indices: list[int]
-    _forces: numpy.ndarray # List of 2d forces applied to all dynamic vertices
+    _forces: list[numpy.ndarray] # List of 2d forces applied to all dynamic vertices
     _shape: Shape # reference to shape to modify
     _springs: list[SpringConstraint]
     _particles: list[Particle]
@@ -352,9 +354,10 @@ class ClothDeformer(Deformer):
     def __init__(self,
                 shape: Shape,
                 dynamic_indices: list[int] = None, 
-                forces: numpy.ndarray = None,
+                forces: list[numpy.ndarray] = None,
                 damping: float = 1e-5,
-                alpha: float = 1e-5):
+                alpha: float = 1e-5,
+                mass: float = 10.0):
         self._shape = shape
         self._dynamic_vertex_indices = dynamic_indices if dynamic_indices != None else []
         self._forces = forces if forces != None else []
@@ -364,7 +367,7 @@ class ClothDeformer(Deformer):
         self._particles = []
 
         for i, vertex in enumerate(shape.get_all_vertices()):
-            self._particles.append(Particle(damping, vertex, not (i in dynamic_indices)))
+            self._particles.append(Particle(damping, vertex, mass, not (i in dynamic_indices)))
 
         relations: dict[int, set[int]] = {}
         triangle_indices = shape.get_triangle_indices()
@@ -398,20 +401,22 @@ class ClothDeformer(Deformer):
                 p1 = self._particles[index]
                 self._springs.append(SpringConstraint(p0, p1, alpha))
 
-    def apply(self, h = 0.1):
+    def apply(self, h: float = 0.1):
+        if h > 1.0: # This usually means there was a lag spike
+            return
         # Apply forces to particles
         for index in self._dynamic_vertex_indices:
             particle = self._particles[index]
-            for force in self._forces:
-                fi = force - particle.damping * particle.v
-                particle.v += h * fi
-                particle.p = particle.x.copy()
-                particle.x = particle.x + h * particle.v
+            force_sum = sum(self._forces)
+            fi = force_sum - particle.damping * particle.v
+            particle.v += h * fi
+            particle.p = particle.x.copy()
+            particle.x = particle.x + h * particle.v
 
         # Apply spring constraints
         for spring in self._springs:
-            w0 = 1.0
-            w1 = 1.0
+            w0 = 1.0 / spring.p0.mass
+            w1 = 1.0 / spring.p1.mass
             delta_x = spring.p1.x - spring.p0.x
             l = numpy.linalg.norm(delta_x)
             C = l - spring.length
@@ -434,6 +439,9 @@ class ClothDeformer(Deformer):
         for index in self._dynamic_vertex_indices:
             particle = self._particles[index]
             self._shape.set_vertex(index, particle.x)
+
+    def set_force(self, index: int, force: numpy.ndarray):
+        self._forces[index] = force
 
     def reset(self):
         for particle in self._particles:
