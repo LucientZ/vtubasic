@@ -2,9 +2,16 @@
     "name": "Luci",
     "parts": [
         {
+            "name": "Top Hair",
+            "texture": "textures/TopHair.png",
+            "mesh": "meshes/topHairMesh.json",
+            "deformers": ["deformers/topHairPhysics.json"]
+        },
+        {
             "name": "Front Hair",
             "texture": "textures/FrontHair.png",
-            "mesh": "meshes/square.json"
+            "mesh": "meshes/square.json",
+            "deformers": ["deformers/frontHairPosition.json"]
         },
         {
             "name": "Front Bangs",
@@ -123,6 +130,9 @@
                 "Eye Whites",
                 "Left Iris",
                 "Right Iris"
+            ],
+            "Front Hair": [
+                "Top Hair"
             ]
         }
     }

@@ -236,8 +236,8 @@ class Shape:
 
         # Apply potential forces to each dynamic deformer
         for deformer in self._dynamic_deformers:
+            delta_transform: numpy.matrix = self._transformation_matrix - previous_matrix
             if isinstance(deformer, ClothDeformer):
-                delta_transform: numpy.matrix = self._transformation_matrix - previous_matrix
                 scaling_factor = 300 # Used to make forces stronger
                 force = numpy.array([
                     scaling_factor * (delta_transform.item((0, 0)) + delta_transform.item((0, 1)) + delta_transform.item((0, 2))),
@@ -470,20 +470,45 @@ class ClothDeformer(Deformer):
 class PositionDeformer(Deformer):
     _x_bounds: tuple[float, float]
     _y_bounds: tuple[float, float]
+    _x_min: Union[float, None]
+    _x_max: Union[float, None]
+    _y_min: Union[float, None]
+    _y_max: Union[float, None]
     _shape: Shape
 
     def __init__(self,
                 shape: Shape,
                 x_bounds: tuple[float, float],
-                y_bounds: tuple[float, float]):
+                y_bounds: tuple[float, float],
+                x_min: Union[float, None] = None,
+                x_max: Union[float, None] = None,
+                y_min: Union[float, None] = None,
+                y_max: Union[float, None] = None):
         self._x_bounds = x_bounds
         self._y_bounds = y_bounds
+        self._x_min = x_min
+        self._x_max = x_max
+        self._y_min = y_min
+        self._y_max = y_max
         self._shape = shape
 
     def apply(self, mouse_pos: tuple[float, float] = (0, 0)):
         # Convert normalized device coordinates with a range [-1.0,1.0] to specified range
         x_value = (mouse_pos[0] + 1.0) / 2.0 * (self._x_bounds[1] - self._x_bounds[0]) + self._x_bounds[0]
         y_value = (mouse_pos[1] + 1.0) / 2.0 * (self._y_bounds[1] - self._y_bounds[0]) + self._y_bounds[0]
+        
+        if self._x_min != None:
+            x_value = max(x_value, self._x_min)
+        
+        if self._x_max != None:
+            x_value = min(x_value, self._x_max)
+
+        if self._y_min != None:
+            y_value = max(y_value, self._y_min)
+        
+        if self._y_max != None:
+            y_value = min(y_value, self._y_max)
+
         self._shape.translate((x_value, y_value))
 
 class ImageShape(Shape):

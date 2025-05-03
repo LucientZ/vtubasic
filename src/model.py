@@ -60,7 +60,11 @@ class Model:
                                 shape.add_static_deformer(PositionDeformer(
                                     shape,
                                     (deformer_config["xLowerBound"], deformer_config["xUpperBound"]),
-                                    (deformer_config["yLowerBound"], deformer_config["yUpperBound"])
+                                    (deformer_config["yLowerBound"], deformer_config["yUpperBound"]),
+                                    x_min = deformer_config.get("xMin"),
+                                    x_max = deformer_config.get("xMax"),
+                                    y_min = deformer_config.get("yMin"),
+                                    y_max = deformer_config.get("yMax")
                                 ))
 
         
