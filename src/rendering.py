@@ -133,12 +133,17 @@ class Texture:
         glDeleteTextures(1, (self._texture))
 
 class Deformer():
+    """
+    Interface for deformers which change the shape of a model
+    """
     def __init__(self):
         pass
     def apply(self, h = 0.0) -> None:
         """
         Applies the deformer's rules to the original shape
         """
+        pass
+    def reset(self):
         pass
     
 class Shape:
@@ -147,8 +152,6 @@ class Shape:
     _triangle_indices: list[int]
     _vertex_buf: numpy.ndarray[tuple[int], numpy.dtype[numpy.floating]] # Flattened version of vertices
     _index_buf: numpy.ndarray[tuple[int], numpy.dtype[numpy.integer]]
-    _vertex_count: int
-    _vao: Any
     _vbo: Any # Vertex buffer object
     _ebo: Any # Element buffer object
     _texture: Union[Texture, None]
@@ -158,6 +161,7 @@ class Shape:
     _name: str
     _translation: list[float]
     _transformation_matrix: numpy.matrix
+    _WIREFRAME_TEXTURE: Texture # Static variable used when drawing wireframe. Initialized when pygame is finished
 
     def __init__(self, vertices: list[Vertex], triangle_indices: list[int], texture: Texture = None, name: str = None):
         """
@@ -173,8 +177,8 @@ class Shape:
         self._triangle_indices = triangle_indices
         self._index_buf = numpy.array(triangle_indices, dtype=numpy.uint32)
         self._texture = texture
-        self._vao = glGenVertexArrays(1)
         self._vbo = glGenBuffers(1)
+        self._ebo = glGenBuffers(1)
         self._static_deformers = []
         self._dynamic_deformers = []
         self._child_shapes = []
@@ -183,22 +187,25 @@ class Shape:
         self._transformation_matrix = numpy.identity(3, dtype=numpy.float32)
         self._name = name if name != None else "Shape"
 
-        self._ebo = glGenBuffers(1)
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self._ebo)
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, self._index_buf.nbytes, self._index_buf, GL_STATIC_DRAW)
 
-    def draw(self, program: Program):
+    def draw(self, program: Program, draw_wireframe: bool = False, redraw_shape: bool = True):
+        program.bind()
         if self._texture != None:
-            self._texture.bind()
+            Shape._WIREFRAME_TEXTURE.bind() if draw_wireframe else self._texture.bind()
+        
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE if draw_wireframe else GL_FILL)
+
         # Create and bind buffer data to GPU
         self.create_vertex_buffers()
-        glBindVertexArray(self._vao)
         glBindBuffer(GL_ARRAY_BUFFER, self._vbo)
         glBufferData(GL_ARRAY_BUFFER, self._vertex_buf.nbytes, self._vertex_buf, GL_STATIC_DRAW)
+        
         glEnableVertexAttribArray(0)
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, VERTEX_SIZE_BYTES, ctypes.c_void_p(POSITION_OFFSET))
         glEnableVertexAttribArray(1)
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, VERTEX_SIZE_BYTES, ctypes.c_void_p(TEXTURE_OFFSET))
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, VERTEX_SIZE_BYTES, ctypes.c_void_p(TEXTURE_OFFSET))
 
         # Send transformation data to GPU
         glUniformMatrix3fv(
@@ -208,12 +215,16 @@ class Shape:
             self._transformation_matrix
         )
 
-        self.apply_static_deformers()
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self._ebo)
         glDrawElements(GL_TRIANGLES, len(self._triangle_indices), GL_UNSIGNED_INT, ctypes.c_void_p(0))
 
+        # Draw shape normally after wireframe
+        if draw_wireframe and redraw_shape:
+            self.draw(program, False)
+
         if self._texture != None:
             self._texture.unbind()
+        program.unbind()
 
     def apply_transformation_hierarchy(self, model_view: MatrixStack):
         model_view.push_matrix()
@@ -225,12 +236,11 @@ class Shape:
         model_view.pop_matrix()
 
     def create_vertex_buffers(self) -> None:
-        self._vertex_count = len(self._vertices)
         self._vertex_buf = numpy.array(self._vertices, dtype=numpy.float32).flatten()
 
     def apply_static_deformers(self):
         """
-        Sends static deformer information to the GPU.
+        Creates static information sent to the GPU.
         """
         for deformer in self._static_deformers:
             deformer.apply()
@@ -276,15 +286,19 @@ class Shape:
 
     def get_all_vertices(self) -> list[Vertex]:
         return self._vertices
+    
+    def get_name(self) -> str:
+        return self._name
 
     def reset(self) -> None:
+        for deformer in self._dynamic_deformers:
+            deformer.reset()
         self._vertices = self._original_vertices.copy()
 
     def destroy(self):
         """
         Removes all buffers
         """
-        glDeleteVertexArrays(1, (self._vao,))
         glDeleteBuffers(1, (self._vbo,))
         glDeleteBuffers(1, (self._ebo,))
 
@@ -332,6 +346,8 @@ class ClothDeformer(Deformer):
     _shape: Shape # reference to shape to modify
     _springs: list[SpringConstraint]
     _particles: list[Particle]
+    _alpha: float
+    _damping: float
 
     def __init__(self,
                 shape: Shape,
@@ -343,6 +359,7 @@ class ClothDeformer(Deformer):
         self._dynamic_vertex_indices = dynamic_indices if dynamic_indices != None else []
         self._forces = forces if forces != None else []
         self._alpha = alpha
+        self._damping = damping
         self._springs = []
         self._particles = []
 
@@ -418,11 +435,18 @@ class ClothDeformer(Deformer):
             particle = self._particles[index]
             self._shape.set_vertex(index, particle.x)
 
+    def reset(self):
+        for particle in self._particles:
+            particle.x = particle.x0.copy()
+            particle.p = particle.x0.copy()
+            particle.v = particle.v0.copy()
+        
+
 class ImageShape(Shape):
     """
     Image texture that spans the entire screen
     """
-    def __init__(self, texture: Union[Texture, None] = None):
+    def __init__(self, texture: Union[Texture, None] = None, name: str = None):
         vertices = [
             Vertex(-1.0, -1.0, 0.0, 0.0, 0.0),
             Vertex(1.0, -1.0, 0.0, 1.0, 0.0),
@@ -434,4 +458,70 @@ class ImageShape(Shape):
             0, 1, 3,
             0, 3, 2
         ]
-        super().__init__(vertices, indices, texture)
+        super().__init__(vertices, indices, texture, name)
+
+
+class AutoTriangulator():
+    """
+    Abstracts the concepts of creating triangles from arbitrary vertices
+    """
+    _vertices: list[Vertex]
+    _triangle_indices: list[int]
+    _dynamic_indices: list[int]
+    _texture: Texture
+    _vbo: Any # Vertex buffer object
+    _ebo: Any # Element buffer object
+
+    def __init__(self, vertices: list[Vertex], triangle_indices: list[int]):
+        self._vertices = vertices.copy()
+        self._triangle_indices = triangle_indices.copy()
+        self._texture = Texture("resources/SolidRed.png")
+        self._vbo = glGenBuffers(1)
+        self._ebo = glGenBuffers(1)
+
+    def auto_triangulate(self):
+        """
+        Implementation of Delaunay Triangulation
+        """
+        # Setup initial vertices
+        vertices = self._vertices.copy()
+
+        # Create a super triangle that encapsulates all vertices which will be removed later
+        super_triangle_0 = Vertex(-3.0, -2.0, 0.0, 0.0, 0.0)
+        super_triangle_1 = Vertex( 0.0,  4.0, 0.0, 0.0, 0.0)
+        super_triangle_2 = Vertex( 3.0, -2.0, 0.0, 0.0, 0.0)
+        vertices.append(super_triangle_0)
+        vertices.append(super_triangle_1)
+        vertices.append(super_triangle_2)
+        triangle_indices = [len(vertices) - 1, len(vertices) - 2, len(vertices) - 3]
+
+    def add_vertex(self, vertex: Vertex, dynamic: bool):
+        self._triangle_indices.append(vertex)
+        if dynamic:
+            self._dynamic_indices.append(len(self._triangle_indices) - 1)
+        self.auto_triangulate()
+
+    def draw(self, program: Program):
+        program.bind()
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
+
+        vertex_buf = numpy.array(self._vertices, dtype=numpy.float32).flatten()
+        glBindBuffer(GL_ARRAY_BUFFER, self._vbo)
+        glBufferData(GL_ARRAY_BUFFER, vertex_buf.nbytes, vertex_buf, GL_STATIC_DRAW)
+        
+        glEnableVertexAttribArray(0)
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, VERTEX_SIZE_BYTES, ctypes.c_void_p(POSITION_OFFSET))
+        glEnableVertexAttribArray(1)
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, VERTEX_SIZE_BYTES, ctypes.c_void_p(TEXTURE_OFFSET))
+
+        glUniform4f(program.get_uniform("lineColor"), 1.0, 0.0, 0.0, 1.0)
+
+        index_buf = numpy.array(self._triangle_indices, dtype=numpy.uint32)
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self._ebo)
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_buf.nbytes, index_buf, GL_STATIC_DRAW)
+        glDrawElements(GL_TRIANGLES, len(self._triangle_indices), GL_UNSIGNED_INT, ctypes.c_void_p(0))
+
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
+        program.unbind()
+        
+

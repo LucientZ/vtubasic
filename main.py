@@ -11,7 +11,7 @@ if __name__ == "__main__":
     model_directory = ask_prompt(model_prompts, "Choose a model to use:")
     app_prompts = [
         ("Start runtime app", lambda: RuntimeApp()),
-        ("Start editor app", lambda: EditorApp()),
+        ("Start editor app (Broken)", lambda: EditorApp()),
     ]
     app: App = ask_prompt(app_prompts)
     app.load_model(model_directory)

@@ -16,8 +16,7 @@
       "texPos": [
         0.0,
         0.0
-      ],
-      "dynamic": false
+      ]
     },
     {
       "pos": [
@@ -27,8 +26,7 @@
       "texPos": [
         1.0,
         0.0
-      ],
-      "dynamic": false
+      ]
     },
     {
       "pos": [
@@ -38,8 +36,7 @@
       "texPos": [
         0.0,
         1.0
-      ],
-      "dynamic": false
+      ]
     },
     {
       "pos": [
@@ -49,8 +46,17 @@
       "texPos": [
         1.0,
         1.0
+      ]
+    },
+    {
+      "pos": [
+        0.5,
+        0.0
       ],
-      "dynamic": false
+      "texPos": [
+        0.0,
+        0.0
+      ]
     }
   ]
 }

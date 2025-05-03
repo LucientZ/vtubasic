@@ -9,7 +9,8 @@
         {
             "name": "Front Bangs",
             "texture": "textures/FrontBangs.png",
-            "mesh": "meshes/square.json"
+            "mesh": "meshes/testFrontBangs.json",
+            "deformers": ["deformers/testFrontBangs.json"]
         },
         {
             "name": "Eyes",
