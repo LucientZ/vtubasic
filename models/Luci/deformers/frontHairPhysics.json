@@ -60,9 +60,9 @@
         56,
         57
     ],
-    "alpha": 1e-8,
+    "alpha": 3e-5,
     "damping": 2,
-    "gravity": 0.2,
+    "gravity": 0.3,
     "mass": 10.0,
     "timeModifier": 0.5
 }

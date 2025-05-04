@@ -80,12 +80,14 @@
         {
             "name": "Left Jacket Arm",
             "texture": "textures/LeftArm.png",
-            "mesh": "meshes/square.json"
+            "mesh": "meshes/square.json",
+            "deformers": ["deformers/leftArmPosition.json"]
         },
         {
             "name": "Right Jacket Arm",
             "texture": "textures/RightArm.png",
-            "mesh": "meshes/square.json"
+            "mesh": "meshes/square.json",
+            "deformers": ["deformers/rightArmPosition.json"]
         },
         {
             "name": "Neck",

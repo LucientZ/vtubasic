@@ -9,9 +9,9 @@
         5,
         7
     ],
-    "alpha": 1e-3,
+    "alpha": 3e-5,
     "damping": 2,
-    "gravity": 0.1,
-    "mass": 3.0,
+    "gravity": 0.3,
+    "mass": 10.0,
     "timeModifier": 0.5
 }
