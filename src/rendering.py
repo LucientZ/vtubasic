@@ -160,6 +160,7 @@ class Shape:
     _name: str
     _translation: list[float]
     _transformation_matrix: numpy.matrix
+    _texture_offset: numpy.ndarray
     _WIREFRAME_TEXTURE: Texture # Static variable used when drawing wireframe. Initialized when pygame is finished
 
     def __init__(self, vertices: list[Vertex], triangle_indices: list[int], texture: Texture = None, name: str = None):
@@ -182,6 +183,7 @@ class Shape:
         self._child_shapes = []
         self._translation = [0.0, 0.0]
         self._rotation = [0.0, 0.0, 0.0]
+        self._texture_offset = numpy.array([0.0, 0.0], dtype=numpy.float32)
         self._transformation_matrix = numpy.identity(3, dtype=numpy.float32)
         self._name = name if name != None else "Shape"
 
@@ -211,6 +213,11 @@ class Shape:
             1,
             GL_TRUE,
             self._transformation_matrix
+        )
+        glUniform2fv(
+            program.get_uniform("textureOffset"),
+            1,
+            self._texture_offset
         )
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self._ebo)
@@ -286,6 +293,9 @@ class Shape:
                 original_vertex.s,
                 original_vertex.t,
             )
+
+    def set_texture_offset(self, offset: numpy.ndarray):
+        self._texture_offset = offset
 
     def get_all_vertices(self) -> list[Vertex]:
         return self._vertices
@@ -481,7 +491,7 @@ class PositionDeformer(Deformer):
         self._y_max = y_max
         self._shape = shape
 
-    def apply(self, mouse_pos: tuple[float, float] = (0, 0), **kwargs):
+    def apply(self, mouse_pos: tuple[float, float] = (0, 0), **_):
         # Convert normalized device coordinates with a range [-1.0,1.0] to specified range
         x_value = (mouse_pos[0] + 1.0) / 2.0 * (self._x_bounds[1] - self._x_bounds[0]) + self._x_bounds[0]
         y_value = (mouse_pos[1] + 1.0) / 2.0 * (self._y_bounds[1] - self._y_bounds[0]) + self._y_bounds[0]
@@ -499,6 +509,19 @@ class PositionDeformer(Deformer):
             y_value = min(y_value, self._y_max)
 
         self._shape.translate((x_value, y_value))
+
+class TextureDeformer(Deformer):
+    _shape: Shape
+    _name: str
+    _texture_offset: numpy.ndarray
+    def __init__(self, shape: Shape, texture_offset: numpy.ndarray, name: str):
+        self._shape = shape
+        self._texture_offset = texture_offset
+        self._name = name
+
+    def apply(self, name: str, **_):
+        if name == self._name:
+            self._shape.set_texture_offset(self._texture_offset)
 
 class AnimationDeformer(Deformer):
     def __init__(self):

@@ -1,5 +1,6 @@
 {
     "name": "Luci",
+    "expressions": ["Neutral"],
     "parts": [
         {
             "name": "Top Hair",
@@ -75,7 +76,8 @@
         {
             "name": "Front Clothing",
             "texture": "textures/FrontClothing.png",
-            "mesh": "meshes/square.json"
+            "mesh": "meshes/square.json",
+            "deformers": ["deformers/bodyPosition.json"]
         },
         {
             "name": "Left Jacket Arm",

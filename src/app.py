@@ -1,5 +1,5 @@
-import pygame
-import sys
+import pygame, pynput
+import sys, os
 from rendering import *
 from prompt import *
 from model import *
@@ -16,18 +16,34 @@ class App:
     _shapes: list[Shape]
     _threads: list[Thread]
     _model: Union[Model, DebugModel, None]
+    _draw_wireframe: bool = False
+
+    # Realtime data that is useful when the user interacts with the window itself
     _normalized_mouse_pos: tuple[float, float] # normalized coordinates of mouse position from 0 to 1. Puts (0, 0) on bottom left
     _ndc_mouse_pos: tuple[float, float] # normalized device coordinates of mouse position from -1 to 1
-    _draw_wireframe: bool = False
+
+    # Realtime data that affects model deformations
+    _mouse_controller: pynput.mouse.Controller
+    _real_ndc_mouse_pos: tuple[float, float] # normalized device coordinates outside of the window
+    _desktop_width: int
+    _desktop_height: int
+    _window_x: int
+    _window_y: int
 
     def __init__(self):
         self._physics_thread = None
 
+
         # Initializes Window
+        initial_window_pos = (100, 100)
+        self._window_x, self._window_y = initial_window_pos
+        os.environ["SDL_VIDEO_WINDOW_POS"] = "%d, %d" % initial_window_pos
+        
         pygame.init()
         pygame.display.set_mode((self._window_width, self._window_height), pygame.OPENGL | pygame.DOUBLEBUF | pygame.RESIZABLE)
         self._clock = pygame.time.Clock()
         pygame.display.set_caption("VTubasic")
+        self._desktop_width, self._desktop_height = pygame.display.get_desktop_sizes()[0]
 
         # Configure OpenGL
         glEnable(GL_BLEND)
@@ -39,8 +55,10 @@ class App:
         self._program.compile_shaders("resources/vertex_shader.glsl", "resources/fragment_shader.glsl")
         self._program.bind()
         self._program.add_uniform("modelView")
+        self._program.add_uniform("textureOffset")
         self._shapes = []
         self._threads = []
+        self._mouse_controller = pynput.mouse.Controller()
         Shape._WIREFRAME_TEXTURE = Texture("resources/SolidRed.png")
         glLineWidth(2.0)
 
@@ -61,9 +79,6 @@ class App:
         try:
             while(self._running):
                 # Set user input values
-                window_info = pygame.display.Info()
-                self._window_height = window_info.current_h
-                self._window_width = window_info.current_w
                 mouse_pos = pygame.mouse.get_pos()
                 self._normalized_mouse_pos = (
                     mouse_pos[0] / self._window_width,
@@ -72,6 +87,16 @@ class App:
                 self._ndc_mouse_pos = (
                      (2 * mouse_pos[0] / self._window_width) - 1,
                      -((2 * mouse_pos[1] / self._window_height) - 1)
+                )
+                
+                real_x, real_y = self._mouse_controller.position # Top left of the screen
+
+                real_x -= self._window_x
+                real_y -= self._window_y
+
+                self._real_ndc_mouse_pos = (
+                    2 * real_x / self._desktop_width - 1,
+                    -(2 * real_y / self._desktop_height - 1)
                 )
 
                 self.before_render()
@@ -102,6 +127,9 @@ class App:
         for event in pygame.event.get():
             if(event.type == pygame.QUIT):
                 self._running = False
+            elif event.type == pygame.VIDEORESIZE:
+                self._window_width = event.w
+                self._window_height = event.h
 
     def after_render(self):
         """
@@ -138,6 +166,12 @@ class RuntimeApp(App):
         for event in pygame.event.get():
             if(event.type == pygame.QUIT):
                 self._running = False
+            elif event.type == pygame.VIDEORESIZE:
+                self._window_width = event.w
+                self._window_height = event.h
+            elif event.type == pygame.WINDOWMOVED:
+                self._window_x = event.x
+                self._window_y = event.y
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1: # left mouse down
                 self._follow_mouse = True
             elif event.type == pygame.MOUSEBUTTONUP and event.button == 1: # left mouse up
@@ -152,10 +186,10 @@ class RuntimeApp(App):
     def after_render(self):
         delta_time = self._physics_clock.tick() / 1000
         for shape in self._shapes:
-            shape.apply_deformers(delta_time=delta_time, mouse_pos=self._ndc_mouse_pos)
+            shape.apply_deformers(delta_time=delta_time, mouse_pos=self._real_ndc_mouse_pos)
         
         for shape in self._model.get_layers():
-            shape.apply_deformers(delta_time=delta_time, mouse_pos=self._ndc_mouse_pos)
+            shape.apply_deformers(delta_time=delta_time, mouse_pos=self._real_ndc_mouse_pos)
 
 
     def quit(self) -> None:
@@ -178,8 +212,11 @@ class EditorApp(App):
     def before_render(self):
         previous_layer = self._selected_layer
         for event in pygame.event.get():
-            if(event.type == pygame.QUIT):
+            if event.type == pygame.QUIT:
                 self._running = False
+            elif event.type == pygame.VIDEORESIZE:
+                self._window_width = event.w
+                self._window_height = event.h
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 assert(isinstance(self._model, DebugModel))
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1: # left mouse down

@@ -7,10 +7,18 @@
         3,
         4,
         5,
-        7
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15
     ],
-    "alpha": 3e-5,
-    "damping": 2,
+    "alpha": 6e-4,
+    "damping": 1e-2,
     "gravity": 0.3,
     "mass": 10.0,
     "timeModifier": 0.5
