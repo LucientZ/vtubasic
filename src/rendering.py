@@ -4,7 +4,8 @@ from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader, ShaderProgram
 from collections import namedtuple
 from typing import Union, Any
-from math import sin, cos
+from math import sin, cos, sqrt
+import json
 
 class Program:
     _shader: ShaderProgram
@@ -174,7 +175,7 @@ class Shape:
         self._original_vertices = vertices.copy()
         self._triangle_indices = triangle_indices
         self._index_buf = numpy.array(triangle_indices, dtype=numpy.uint32)
-        self._texture = texture
+        self._texture = texture if texture != None else Shape._WIREFRAME_TEXTURE
         self._vbo = glGenBuffers(1)
         self._ebo = glGenBuffers(1)
         self._deformers = []
@@ -523,66 +524,191 @@ class ImageShape(Shape):
 
 
 class AutoTriangulator():
+    class Edge():
+        v0: Vertex
+        v1: Vertex
+        v0_index: int
+        v1_index: int
+        def __init__(self, v0: Vertex, v1: Vertex, v0_index: int, v1_index: int):
+            self.v0 = v0
+            self.v1 = v1
+            self.v0_index = v0_index
+            self.v1_index = v1_index
+        
+        def __eq__(self, value):
+            return (self.v0_index == value.v0_index and self.v1_index == value.v1_index) or (self.v0_index == value.v1_index and self.v1_index == value.v0_index)
+        
+        def __hash__(self):
+            return self.v0_index + self.v1_index
+
+    class Triangle():
+        v0: Vertex
+        v1: Vertex
+        v2: Vertex
+        v0_index: int
+        v1_index: int
+        v2_index: int
+        radius: float
+        circumcenter: Vertex
+
+        def __init__(self, A: Vertex, B: Vertex, C: Vertex, v0_index: int = -1, v1_index: int = -1, v2_index: int = -1):
+            self.v0 = A
+            self.v1 = B
+            self.v2 = C
+            self.v0_index = v0_index
+            self.v1_index = v1_index
+            self.v2_index = v2_index
+
+            # Calculate sidelengths of triangle
+            a = sqrt((A.x-B.x)**2 + (A.y-B.y)**2)
+            b = sqrt((A.x-C.x)**2 + (A.y-C.y)**2)
+            c = sqrt((C.x-B.x)**2 + (C.y-B.y)**2)
+
+            self.radius = a*b*c / sqrt((a+b+c)*(b+c-a)*(c+a-b)*(a+b-c))
+            
+            # https://en.wikipedia.org/wiki/Circumcircle#Circumcenter_coordinates
+            D = 2 * (A.x * (B.y - C.y) + B.x * (C.y - A.y) + C.x * (A.y - B.y))
+            self.circumcenter = Vertex(
+                1/D * ((A.x**2 + A.y**2)*(B.y - C.y) + (B.x**2 + B.y**2)*(C.y - A.y) + (C.x**2 + C.y**2)*(A.y - B.y)),
+                1/D * ((A.x**2 + A.y**2)*(C.x - B.x) + (B.x**2 + B.y**2)*(A.x - C.x) + (C.x**2 + C.y**2)*(B.x - A.x)),
+                0.0,
+                0.0,
+                1.0
+            )
+        
+        def is_in_circumcircle(self, vertex: Vertex) -> bool:
+            dx = self.circumcenter.x - vertex.x
+            dy = self.circumcenter.y - vertex.y
+            return sqrt(dx*dx + dy*dy) <= self.radius
+
     """
     Abstracts the concepts of creating triangles from arbitrary vertices
     """
     _vertices: list[Vertex]
     _triangle_indices: list[int]
-    _dynamic_indices: list[int]
-    _texture: Texture
-    _vbo: Any # Vertex buffer object
-    _ebo: Any # Element buffer object
+    _original_vertices: list[Vertex]
+    _original_triangle_indices: list[int]
+    _shape: Shape
+    _mesh_file: str
 
-    def __init__(self, vertices: list[Vertex], triangle_indices: list[int]):
+    def __init__(self, vertices: list[Vertex], triangle_indices: list[int], mesh_file: str):
         self._vertices = vertices.copy()
         self._triangle_indices = triangle_indices.copy()
-        self._texture = Texture("resources/SolidRed.png")
-        self._vbo = glGenBuffers(1)
-        self._ebo = glGenBuffers(1)
+        self._original_vertices = vertices.copy()
+        self._original_triangle_indices = triangle_indices.copy()
+        self._mesh_file = mesh_file
+        self._shape = Shape(self._vertices, self._triangle_indices)
 
     def auto_triangulate(self):
         """
         Implementation of Delaunay Triangulation
+        https://www.gorillasun.de/blog/bowyer-watson-algorithm-for-delaunay-triangulation/
         """
-        # Setup initial vertices
-        vertices = self._vertices.copy()
-
+        if len(self._vertices) < 3:
+            print(f"Mesh has {len(self._vertices)} vertices")
+            self._triangle_indices = []
+            self._shape._triangle_indices = []
+            self._shape._vertices = self._vertices
+            return
         # Create a super triangle that encapsulates all vertices which will be removed later
+        
         super_triangle_0 = Vertex(-3.0, -2.0, 0.0, 0.0, 0.0)
         super_triangle_1 = Vertex( 0.0,  4.0, 0.0, 0.0, 0.0)
         super_triangle_2 = Vertex( 3.0, -2.0, 0.0, 0.0, 0.0)
-        vertices.append(super_triangle_0)
-        vertices.append(super_triangle_1)
-        vertices.append(super_triangle_2)
-        triangle_indices = [len(vertices) - 1, len(vertices) - 2, len(vertices) - 3]
+        
+        triangles: list[AutoTriangulator.Triangle] = [AutoTriangulator.Triangle(
+            super_triangle_0,
+            super_triangle_1,
+            super_triangle_2,
+            -1,
+            -2,
+            -3
+        )]
 
-    def add_vertex(self, vertex: Vertex, dynamic: bool):
-        self._triangle_indices.append(vertex)
-        if dynamic:
-            self._dynamic_indices.append(len(self._triangle_indices) - 1)
+        for (i, vertex) in enumerate(self._vertices):
+            good_triangles: list[AutoTriangulator.Triangle] = []
+            edges: list[AutoTriangulator.Edge] = []
+            for triangle in triangles:
+                if triangle.is_in_circumcircle(vertex):
+                    edges.append(AutoTriangulator.Edge(
+                        triangle.v0,
+                        triangle.v1,
+                        triangle.v0_index,
+                        triangle.v1_index
+                    ))
+                    edges.append(AutoTriangulator.Edge(
+                        triangle.v0,
+                        triangle.v2,
+                        triangle.v0_index,
+                        triangle.v2_index
+                    ))
+                    edges.append(AutoTriangulator.Edge(
+                        triangle.v2,
+                        triangle.v1,
+                        triangle.v2_index,
+                        triangle.v1_index
+                    ))
+                    good_triangles.append(triangle)
+            
+            edges = list(set(edges)) # Gets unique edges
+
+            for edge in edges:
+                good_triangles.append(AutoTriangulator.Triangle(
+                    edge.v0,
+                    edge.v1,
+                    vertex,
+                    edge.v0_index,
+                    edge.v1_index,
+                    i
+                ))
+            
+            triangles = good_triangles
+
+        triangle_indices: list[int] = []
+        for triangle in triangles:
+            # Skip triangles involving super triangle
+            if triangle.v0_index < 0 or triangle.v1_index < 0 or triangle.v2_index < 0:
+                continue
+            triangle_indices.append(triangle.v0_index)
+            triangle_indices.append(triangle.v1_index)
+            triangle_indices.append(triangle.v2_index)
+
+        self._triangle_indices = triangle_indices
+        self._shape = Shape(self._vertices, self._triangle_indices)
+        print(self._shape._vertices)
+        print(triangle_indices)
+
+            
+    def reset(self):
+        print("resetting")
+        self._vertices = self._original_vertices.copy()
+        self._triangle_indices = self._original_triangle_indices.copy()
+        self._shape = Shape(self._vertices, self._triangle_indices)
+
+    def add_vertex(self, vertex: Vertex):
+        self._vertices.append(vertex)
         self.auto_triangulate()
 
+    def pop_vertex(self):
+        if len(self._vertices) > 0:
+            self._vertices.pop()
+        self.auto_triangulate()
+
+    def save_triangles(self):
+        """
+        Overwrites currently loaded mesh
+        """
+        print(f"Saved to {self._mesh_file}")
+        with open(self._mesh_file, "w") as f:
+            print(self._vertices)
+            json.dump({
+                "triangles": self._triangle_indices,
+                "vertices": list(map(lambda v: {
+                    "pos": [v.x, v.y],
+                    "texPos": [v.s, v.t]
+                }, self._vertices))
+            }, f)
+
     def draw(self, program: Program):
-        program.bind()
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
-
-        vertex_buf = numpy.array(self._vertices, dtype=numpy.float32).flatten()
-        glBindBuffer(GL_ARRAY_BUFFER, self._vbo)
-        glBufferData(GL_ARRAY_BUFFER, vertex_buf.nbytes, vertex_buf, GL_STATIC_DRAW)
-        
-        glEnableVertexAttribArray(0)
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, VERTEX_SIZE_BYTES, ctypes.c_void_p(POSITION_OFFSET))
-        glEnableVertexAttribArray(1)
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, VERTEX_SIZE_BYTES, ctypes.c_void_p(TEXTURE_OFFSET))
-
-        glUniform4f(program.get_uniform("lineColor"), 1.0, 0.0, 0.0, 1.0)
-
-        index_buf = numpy.array(self._triangle_indices, dtype=numpy.uint32)
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self._ebo)
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_buf.nbytes, index_buf, GL_STATIC_DRAW)
-        glDrawElements(GL_TRIANGLES, len(self._triangle_indices), GL_UNSIGNED_INT, ctypes.c_void_p(0))
-
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
-        program.unbind()
-        
+        self._shape.draw(program, draw_wireframe=True, redraw_shape=False)
 

@@ -15,7 +15,7 @@ class App:
     _program: Program
     _shapes: list[Shape]
     _threads: list[Thread]
-    _model: Union[Model, None]
+    _model: Union[Model, DebugModel, None]
     _normalized_mouse_pos: tuple[float, float] # normalized coordinates of mouse position from 0 to 1. Puts (0, 0) on bottom left
     _ndc_mouse_pos: tuple[float, float] # normalized device coordinates of mouse position from -1 to 1
     _draw_wireframe: bool = False
@@ -85,7 +85,6 @@ class App:
 
                 if self._model != None:
                     self._model.draw(self._program, self._draw_wireframe)
-                self._program.unbind()
 
                 self.after_render()
                 pygame.display.flip()
@@ -165,19 +164,16 @@ class RuntimeApp(App):
         super().quit()
 
 class EditorApp(App):
-    _triangulators: list[AutoTriangulator]
     _layer_names: list[str]
     _selected_layer: int
-    _ui_program: Program
+    _ctrl_held: bool
 
     def __init__(self):
         super().__init__()
         self._selected_layer = 0
         self._triangulators = []
-        self._ui_program = Program()
-        self._ui_program.compile_shaders("resources/wireframe_vertex_shader.glsl", "resources/wireframe_fragment_shader.glsl")
-        self._ui_program.add_uniform("lineColor")
         self.set_bg_color(0.5,0.5,0.5,1.0)
+        self._ctrl_held = False
 
     def before_render(self):
         previous_layer = self._selected_layer
@@ -185,32 +181,45 @@ class EditorApp(App):
             if(event.type == pygame.QUIT):
                 self._running = False
             elif event.type == pygame.MOUSEBUTTONDOWN:
+                assert(isinstance(self._model, DebugModel))
                 print({
                     "pos": list(self._ndc_mouse_pos),
                     "texPos": list(self._normalized_mouse_pos)
                 })
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1: # left mouse down
+                    self._model._current_triangulator.add_vertex(Vertex(
+                        self._ndc_mouse_pos[0],
+                        self._ndc_mouse_pos[1],
+                        -1.0,
+                        self._normalized_mouse_pos[0],
+                        self._normalized_mouse_pos[1]
+                    ))
+                
             elif event.type == pygame.KEYDOWN:
+                assert(isinstance(self._model, DebugModel))
                 if event.key == pygame.K_LEFTBRACKET:
                     self._selected_layer -= 1
                 elif event.key == pygame.K_RIGHTBRACKET:
                     self._selected_layer += 1
-                elif event.key == pygame.K_w:
-                    self._draw_wireframe = not self._draw_wireframe
+                elif event.key == pygame.K_r:
+                    self._model._current_triangulator.reset()
+                elif event.key == pygame.K_z:
+                    self._model._current_triangulator.pop_vertex()
+                elif event.key == pygame.K_s and self._ctrl_held:
+                    self._model._current_triangulator.save_triangles()
+                elif event.key == pygame.K_LCTRL or event.key == pygame.K_RCTRL:
+                    self._ctrl_held = True
+            elif event.type == pygame.KEYUP:
+                if event.key == pygame.K_LCTRL or event.key == pygame.K_RCTRL:
+                    self._ctrl_held = False
+        
+        # Changes selected layer
         if self._model != None and previous_layer != self._selected_layer:
             self._selected_layer = self._selected_layer % len(self._layer_names)
             self._model.change_root(self._layer_names[self._selected_layer])
-
-        self._triangulators[self._selected_layer].draw(self._ui_program)
-
-    def after_render(self):
-        self._triangulators[self._selected_layer].draw(self._ui_program)
 
     def load_model(self, directory_path: str):
         model = DebugModel(directory_path)
         self._model = model
         self._layer_names = list(map(lambda x: x.get_name(), model.get_layers()))
         self._model.change_root(self._layer_names[self._selected_layer])
-        self._ui_program.bind()
-        for shape in model.get_layers():
-            self._triangulators.append(AutoTriangulator(shape.get_all_vertices(), shape.get_triangle_indices()))
-        self._ui_program.unbind()

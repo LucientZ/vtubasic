@@ -91,7 +91,6 @@ class Model:
         Changes the root shape of the model
         """
         self._root_shape = self._layers[name]
-        print(self._root_shape)
 
     def get_layers(self):
         return self._layers.values()
@@ -111,13 +110,14 @@ class DebugModel(Model):
     Model which is more useful for debugging and editing.
     Loads all textures as squares and only draws root shape.
     """
+    _triangulators: dict[str, AutoTriangulator]
+    _current_triangulator: AutoTriangulator
+
     def __init__(self, model_directory: str):
         super().__init__(model_directory)
-    
-    def draw(self, program: Program, draw_wireframe: bool = False):
-        self._root_shape.draw(program, draw_wireframe)
 
     def load(self, model_directory) -> None:
+        self._triangulators = {}
         with open(f"{model_directory}/config.json", "r") as config_file:
             self._config = json.loads(config_file.read())
 
@@ -126,8 +126,34 @@ class DebugModel(Model):
             texture = Texture(f"{model_directory}/{layer_info["texture"]}")
             shape = ImageShape(texture, layer_info.get("name"))
             self._layers[layer_info["name"]] = shape
+
+            with open(f"{model_directory}/{layer_info["mesh"]}", "r") as mesh_file:
+                    mesh_config = json.loads(mesh_file.read())
+                    triangle_indices = mesh_config["triangles"]
+                    vertices: list[Vertex] = []
+                    for vertex_info in mesh_config["vertices"]:
+                        vertex = Vertex(
+                            vertex_info["pos"][0],
+                            vertex_info["pos"][1],
+                            -1.0,
+                            vertex_info["texPos"][0],
+                            vertex_info["texPos"][1]
+                        )
+                        vertices.append(vertex)
+                    triangulator = AutoTriangulator(vertices, triangle_indices, f"{model_directory}/{layer_info["mesh"]}")
+                    self._triangulators[layer_info["name"]] = triangulator
         
         self._root_shape = self._layers[self._config["hierarchy"]["root"]]
         for (parent_name, child_names) in self._config["hierarchy"]["relations"].items():
             for child_name in child_names:
                 self._layers[parent_name].add_child_shape(self._layers[child_name])
+        self._current_triangulator = self._triangulators[self._root_shape.get_name()]
+
+    def draw(self, program: Program, draw_wireframe: bool = False):
+        self._current_triangulator.draw(program)
+        self._root_shape.draw(program, draw_wireframe=draw_wireframe)
+
+    def change_root(self, name: str):
+        print(f"{name}")
+        super().change_root(name)
+        self._current_triangulator = self._triangulators[name]
