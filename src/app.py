@@ -24,7 +24,7 @@ class App:
 
     # Realtime data that affects model deformations
     _mouse_controller: pynput.mouse.Controller
-    _real_ndc_mouse_pos: tuple[float, float] # normalized device coordinates outside of the window
+    _desktop_ndc_mouse_pos: tuple[float, float] # normalized device coordinates including outside of the window. This is effectively the same as ndc_mouse_coordinates.
     _desktop_width: int
     _desktop_height: int
     _window_x: int
@@ -89,12 +89,19 @@ class App:
                      -((2 * mouse_pos[1] / self._window_height) - 1)
                 )
                 
+        
+                # Calculates how many pixels from being centered
+                margin_x = (self._desktop_width - self._window_width) / 2.0
+                margin_y = (self._desktop_height - self._window_height) / 2.0
+                offset_x = margin_x - self._window_x
+                offset_y = margin_y - self._window_y
+                                
                 real_x, real_y = self._mouse_controller.position # Top left of the screen
 
-                real_x -= self._window_x
-                real_y -= self._window_y
+                real_x += offset_x
+                real_y += offset_y
 
-                self._real_ndc_mouse_pos = (
+                self._desktop_ndc_mouse_pos = (
                     2 * real_x / self._desktop_width - 1,
                     -(2 * real_y / self._desktop_height - 1)
                 )
@@ -185,11 +192,13 @@ class RuntimeApp(App):
 
     def after_render(self):
         delta_time = self._physics_clock.tick() / 1000
+
+        look_position = self._desktop_ndc_mouse_pos
         for shape in self._shapes:
-            shape.apply_deformers(delta_time=delta_time, mouse_pos=self._real_ndc_mouse_pos)
+            shape.apply_deformers(delta_time=delta_time, mouse_pos=look_position)
         
         for shape in self._model.get_layers():
-            shape.apply_deformers(delta_time=delta_time, mouse_pos=self._real_ndc_mouse_pos)
+            shape.apply_deformers(delta_time=delta_time, mouse_pos=look_position)
 
 
     def quit(self) -> None:

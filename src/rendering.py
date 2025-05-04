@@ -474,6 +474,7 @@ class PositionDeformer(Deformer):
     _y_min: Union[float, None]
     _y_max: Union[float, None]
     _shape: Shape
+    _bind: str
 
     def __init__(self,
                 shape: Shape,
@@ -482,7 +483,8 @@ class PositionDeformer(Deformer):
                 x_min: Union[float, None] = None,
                 x_max: Union[float, None] = None,
                 y_min: Union[float, None] = None,
-                y_max: Union[float, None] = None):
+                y_max: Union[float, None] = None,
+                bind: str = None):
         self._x_bounds = x_bounds
         self._y_bounds = y_bounds
         self._x_min = x_min
@@ -490,12 +492,18 @@ class PositionDeformer(Deformer):
         self._y_min = y_min
         self._y_max = y_max
         self._shape = shape
+        self._bind = bind
 
     def apply(self, mouse_pos: tuple[float, float] = (0, 0), **_):
-        # Convert normalized device coordinates with a range [-1.0,1.0] to specified range
-        x_value = (mouse_pos[0] + 1.0) / 2.0 * (self._x_bounds[1] - self._x_bounds[0]) + self._x_bounds[0]
-        y_value = (mouse_pos[1] + 1.0) / 2.0 * (self._y_bounds[1] - self._y_bounds[0]) + self._y_bounds[0]
-        
+        x_value: float = 0.0
+        y_value: float = 0.0
+        if self._bind == "mouse":
+            # Convert normalized device coordinates with a range [-1.0,1.0] to specified range
+            x_value = (mouse_pos[0] + 1.0) / 2.0 * (self._x_bounds[1] - self._x_bounds[0]) + self._x_bounds[0]
+            y_value = (mouse_pos[1] + 1.0) / 2.0 * (self._y_bounds[1] - self._y_bounds[0]) + self._y_bounds[0]
+        elif self._bind == "time":
+            print("hi") # TODO Fix this
+
         if self._x_min != None:
             x_value = max(x_value, self._x_min)
         

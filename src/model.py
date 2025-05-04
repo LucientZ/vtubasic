@@ -65,7 +65,8 @@ class Model:
                                     x_min = deformer_config.get("xMin"),
                                     x_max = deformer_config.get("xMax"),
                                     y_min = deformer_config.get("yMin"),
-                                    y_max = deformer_config.get("yMax")
+                                    y_max = deformer_config.get("yMax"),
+                                    bind = deformer_config.get("bind")
                                 ))
 
         

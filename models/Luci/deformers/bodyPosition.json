@@ -1,5 +1,6 @@
 {
     "type": "position",
+    "bind": "mouse",
     "xLowerBound": 0.001,
     "xUpperBound": -0.001,
     "yLowerBound": -0.04,
