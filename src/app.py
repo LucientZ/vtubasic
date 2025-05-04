@@ -42,7 +42,7 @@ class App:
         self._shapes = []
         self._threads = []
         Shape._WIREFRAME_TEXTURE = Texture("resources/SolidRed.png")
-        glLineWidth(3.0)
+        glLineWidth(2.0)
 
     def run(self) -> None:
         self._running = True
@@ -182,10 +182,6 @@ class EditorApp(App):
                 self._running = False
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 assert(isinstance(self._model, DebugModel))
-                print({
-                    "pos": list(self._ndc_mouse_pos),
-                    "texPos": list(self._normalized_mouse_pos)
-                })
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1: # left mouse down
                     self._model._current_triangulator.add_vertex(Vertex(
                         self._ndc_mouse_pos[0],

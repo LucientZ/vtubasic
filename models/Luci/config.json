@@ -10,8 +10,8 @@
         {
             "name": "Front Hair",
             "texture": "textures/FrontHair.png",
-            "mesh": "meshes/square.json",
-            "deformers": ["deformers/frontHairPosition.json"]
+            "mesh": "meshes/frontHairMesh.json",
+            "deformers": ["deformers/frontHairPosition.json", "deformers/frontHairPhysics.json"]
         },
         {
             "name": "Front Bangs",

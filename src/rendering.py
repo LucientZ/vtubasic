@@ -524,6 +524,8 @@ class ImageShape(Shape):
 
 
 class AutoTriangulator():
+    MAX_VERTEX_DISTANCE: float = 0.22
+
     class Edge():
         v0: Vertex
         v1: Vertex
@@ -539,7 +541,7 @@ class AutoTriangulator():
             return (self.v0_index == value.v0_index and self.v1_index == value.v1_index) or (self.v0_index == value.v1_index and self.v1_index == value.v0_index)
         
         def __hash__(self):
-            return self.v0_index + self.v1_index
+            return hash(frozenset((self.v0_index, self.v1_index)))
 
     class Triangle():
         v0: Vertex
@@ -548,22 +550,33 @@ class AutoTriangulator():
         v0_index: int
         v1_index: int
         v2_index: int
+        a: float
+        b: float
+        c: float
         radius: float
         circumcenter: Vertex
 
-        def __init__(self, A: Vertex, B: Vertex, C: Vertex, v0_index: int = -1, v1_index: int = -1, v2_index: int = -1):
-            self.v0 = A
-            self.v1 = B
-            self.v2 = C
+        def __init__(self, v0: Vertex, v1: Vertex, v2: Vertex, v0_index: int, v1_index: int, v2_index: int):
+
+            self.v0 = v0
+            self.v1 = v1
+            self.v2 = v2
             self.v0_index = v0_index
             self.v1_index = v1_index
             self.v2_index = v2_index
+
+            A = self.v0
+            B = self.v1
+            C = self.v2
 
             # Calculate sidelengths of triangle
             a = sqrt((A.x-B.x)**2 + (A.y-B.y)**2)
             b = sqrt((A.x-C.x)**2 + (A.y-C.y)**2)
             c = sqrt((C.x-B.x)**2 + (C.y-B.y)**2)
 
+            self.a = a
+            self.b = b
+            self.c = c
             self.radius = a*b*c / sqrt((a+b+c)*(b+c-a)*(c+a-b)*(a+b-c))
             
             # https://en.wikipedia.org/wiki/Circumcircle#Circumcenter_coordinates
@@ -575,7 +588,7 @@ class AutoTriangulator():
                 0.0,
                 1.0
             )
-        
+
         def is_in_circumcircle(self, vertex: Vertex) -> bool:
             dx = self.circumcenter.x - vertex.x
             dy = self.circumcenter.y - vertex.y
@@ -601,8 +614,10 @@ class AutoTriangulator():
 
     def auto_triangulate(self):
         """
-        Implementation of Delaunay Triangulation
+        Implementation of Delaunay Triangulation which also has a certain distance at which triangles can connect
         https://www.gorillasun.de/blog/bowyer-watson-algorithm-for-delaunay-triangulation/
+
+        TODO Fix issue where for some reason this tries to connect every vertex
         """
         if len(self._vertices) < 3:
             print(f"Mesh has {len(self._vertices)} vertices")
@@ -612,9 +627,9 @@ class AutoTriangulator():
             return
         # Create a super triangle that encapsulates all vertices which will be removed later
         
-        super_triangle_0 = Vertex(-3.0, -2.0, 0.0, 0.0, 0.0)
-        super_triangle_1 = Vertex( 0.0,  4.0, 0.0, 0.0, 0.0)
-        super_triangle_2 = Vertex( 3.0, -2.0, 0.0, 0.0, 0.0)
+        super_triangle_0 = Vertex(-10.0, -10.0, 0.0, 0.0, 0.0)
+        super_triangle_1 = Vertex( 10.0, -10.0, 0.0, 0.0, 0.0)
+        super_triangle_2 = Vertex( 0.0,   10.0, 0.0, 0.0, 0.0)
         
         triangles: list[AutoTriangulator.Triangle] = [AutoTriangulator.Triangle(
             super_triangle_0,
@@ -648,8 +663,9 @@ class AutoTriangulator():
                         triangle.v2_index,
                         triangle.v1_index
                     ))
+                else:
                     good_triangles.append(triangle)
-            
+
             edges = list(set(edges)) # Gets unique edges
 
             for edge in edges:
@@ -669,16 +685,17 @@ class AutoTriangulator():
             # Skip triangles involving super triangle
             if triangle.v0_index < 0 or triangle.v1_index < 0 or triangle.v2_index < 0:
                 continue
+
+            # Skip triangles that are too large
+            if triangle.a > AutoTriangulator.MAX_VERTEX_DISTANCE or triangle.b > AutoTriangulator.MAX_VERTEX_DISTANCE or triangle.c > AutoTriangulator.MAX_VERTEX_DISTANCE:
+                continue
+
             triangle_indices.append(triangle.v0_index)
             triangle_indices.append(triangle.v1_index)
             triangle_indices.append(triangle.v2_index)
-
         self._triangle_indices = triangle_indices
         self._shape = Shape(self._vertices, self._triangle_indices)
-        print(self._shape._vertices)
-        print(triangle_indices)
 
-            
     def reset(self):
         print("resetting")
         self._vertices = self._original_vertices.copy()
@@ -687,7 +704,13 @@ class AutoTriangulator():
 
     def add_vertex(self, vertex: Vertex):
         self._vertices.append(vertex)
-        self.auto_triangulate()
+        print(f"Vertex number {len(self._vertices) - 1}")
+        try:
+            self.auto_triangulate()
+        except Exception as e:
+            print(f"Issue adding vertex: {e}")
+            self._vertices.pop()
+            
 
     def pop_vertex(self):
         if len(self._vertices) > 0:
@@ -700,7 +723,6 @@ class AutoTriangulator():
         """
         print(f"Saved to {self._mesh_file}")
         with open(self._mesh_file, "w") as f:
-            print(self._vertices)
             json.dump({
                 "triangles": self._triangle_indices,
                 "vertices": list(map(lambda v: {

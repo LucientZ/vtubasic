@@ -36,6 +36,10 @@ python main.py
 - `]` Move forward a layer
 - `click` Add vertex
     - This currently just prints these to the console
+- `z` Remove the most recent vertex
+    - This includes any existing vertices
+- `r` Reset vertices to last saved mesh
+- `ctrl-s` Overwrites the loaded mesh with current mesh
 
 
 ## How it works
