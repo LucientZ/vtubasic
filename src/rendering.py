@@ -406,18 +406,18 @@ class ClothDeformer(Deformer):
                 p1 = self._particles[index]
                 self._springs.append(SpringConstraint(p0, p1, alpha))
 
-    def apply(self, h: float = 0.1, **kwargs):
-        if h > 0.1: # This usually means there was a lag spike
+    def apply(self, delta_time: float = 0.1, **kwargs):
+        if delta_time > 0.1: # This usually means there was a lag spike
             return
-        h = h * self._time_modifier
+        delta_time = delta_time * self._time_modifier
         # Apply forces to particles
         for index in self._dynamic_vertex_indices:
             particle = self._particles[index]
             force_sum = sum(self._forces)
             fi = force_sum - particle.damping * particle.v
-            particle.v += h * fi
+            particle.v += delta_time * fi
             particle.p = particle.x.copy()
-            particle.x = particle.x + h * particle.v
+            particle.x = particle.x + delta_time * particle.v
 
         # Apply spring constraints
         for spring in self._springs:
@@ -429,7 +429,7 @@ class ClothDeformer(Deformer):
             gradC0 = -delta_x / l
             gradC1 = delta_x / l
 
-            lambda_value = -C / (w0 + w1 + spring.alpha / (h * h))
+            lambda_value = -C / (w0 + w1 + spring.alpha / (delta_time * delta_time))
 
             if not spring.p0.fixed:
                 spring.p0.x += lambda_value * w0 * gradC0
@@ -439,7 +439,7 @@ class ClothDeformer(Deformer):
         # Update velocities
         for index in self._dynamic_vertex_indices:
             particle = self._particles[index]
-            particle.v = 1.0/h * (particle.x - particle.p)
+            particle.v = 1.0/delta_time * (particle.x - particle.p)
         
         # Applies calculated positions
         for index in self._dynamic_vertex_indices:
@@ -498,6 +498,10 @@ class PositionDeformer(Deformer):
             y_value = min(y_value, self._y_max)
 
         self._shape.translate((x_value, y_value))
+
+class AnimationDeformer(Deformer):
+    def __init__(self):
+        pass
 
 class ImageShape(Shape):
     """
