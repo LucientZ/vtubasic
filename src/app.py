@@ -153,12 +153,10 @@ class RuntimeApp(App):
     def after_render(self):
         seconds = self._physics_clock.tick() / 1000
         for shape in self._shapes:
-            shape.apply_static_deformers(mouse_pos=self._ndc_mouse_pos)
-            shape.apply_dynamic_deformers(seconds)
+            shape.apply_deformers(h=seconds, mouse_pos=self._ndc_mouse_pos)
         
         for shape in self._model.get_layers():
-            shape.apply_static_deformers(mouse_pos=self._ndc_mouse_pos)
-            shape.apply_dynamic_deformers(seconds)
+            shape.apply_deformers(h=seconds, mouse_pos=self._ndc_mouse_pos)
 
 
     def quit(self) -> None:

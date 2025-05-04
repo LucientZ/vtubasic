@@ -45,7 +45,7 @@ class Model:
                         with open(f"{model_directory}/{deformer_file}", "r") as f:
                             deformer_config = json.loads(f.read())
                             if deformer_config["type"] == "cloth":
-                                shape.add_dynamic_deformer(ClothDeformer(
+                                shape.add_deformer(ClothDeformer(
                                     shape,
                                     deformer_config["dynamicVertices"],
                                     [
@@ -58,7 +58,7 @@ class Model:
                                     time_modifier=deformer_config.get("timeModifier") if deformer_config.get("timeModifier") != None else 1.0
                                 ))
                             elif deformer_config["type"] == "position":
-                                shape.add_static_deformer(PositionDeformer(
+                                shape.add_deformer(PositionDeformer(
                                     shape,
                                     (deformer_config["xLowerBound"], deformer_config["xUpperBound"]),
                                     (deformer_config["yLowerBound"], deformer_config["yUpperBound"]),

@@ -154,8 +154,7 @@ class Shape:
     _vbo: Any # Vertex buffer object
     _ebo: Any # Element buffer object
     _texture: Union[Texture, None]
-    _static_deformers: list[Deformer] # Deformers which temporarily modify vertices. These send information to the GPU
-    _dynamic_deformers: list[Deformer] # Deformers which permanently modify vertices. These mutate the given shape
+    _deformers: list[Deformer] # Deformers which change the shape
     _child_shapes: list["Shape"] # Nested shapes to apply transformations to
     _name: str
     _translation: list[float]
@@ -178,8 +177,7 @@ class Shape:
         self._texture = texture
         self._vbo = glGenBuffers(1)
         self._ebo = glGenBuffers(1)
-        self._static_deformers = []
-        self._dynamic_deformers = []
+        self._deformers = []
         self._child_shapes = []
         self._translation = [0.0, 0.0]
         self._rotation = [0.0, 0.0, 0.0]
@@ -234,10 +232,10 @@ class Shape:
         for shape in self._child_shapes:
             shape.apply_transformation_hierarchy(model_view)
 
-        # Apply potential forces to each dynamic deformer
-        for deformer in self._dynamic_deformers:
-            delta_transform: numpy.matrix = self._transformation_matrix - previous_matrix
+        # Apply potential forces to each deformer that needs it
+        for deformer in self._deformers:
             if isinstance(deformer, ClothDeformer):
+                delta_transform: numpy.matrix = self._transformation_matrix - previous_matrix
                 scaling_factor = 300 # Used to make forces stronger
                 force = numpy.array([
                     scaling_factor * (delta_transform.item((0, 0)) + delta_transform.item((0, 1)) + delta_transform.item((0, 2))),
@@ -250,28 +248,14 @@ class Shape:
     def create_vertex_buffers(self) -> None:
         self._vertex_buf = numpy.array(self._vertices, dtype=numpy.float32).flatten()
 
-    def apply_static_deformers(self, **kwargs):
-        """
-        Creates static information sent to the GPU.
-        """
+    def apply_deformers(self, **kwargs):
         self._translation = [0.0,0.0,0.0]
         self._rotation = [0.0,0.0,0.0]
-        for deformer in self._static_deformers:
+        for deformer in self._deformers:
             deformer.apply(**kwargs)
 
-    def apply_dynamic_deformers(self, h = 0.1):
-        """
-        Mutates the current shape with its dynamic deformers.
-        This is used for physics calculations.
-        """
-        for deformer in self._dynamic_deformers:
-            deformer.apply(h)
-
-    def add_static_deformer(self, deformer: Deformer):
-        self._static_deformers.append(deformer)
-
-    def add_dynamic_deformer(self, deformer: Deformer):
-        self._dynamic_deformers.append(deformer)
+    def add_deformer(self, deformer: Deformer):
+        self._deformers.append(deformer)
 
     def add_child_shape(self, shape: "Shape"):
         self._child_shapes.append(shape)
@@ -309,7 +293,7 @@ class Shape:
         return self._name
 
     def reset(self) -> None:
-        for deformer in self._dynamic_deformers:
+        for deformer in self._deformers:
             deformer.reset()
         self._vertices = self._original_vertices.copy()
 
@@ -422,7 +406,7 @@ class ClothDeformer(Deformer):
                 p1 = self._particles[index]
                 self._springs.append(SpringConstraint(p0, p1, alpha))
 
-    def apply(self, h: float = 0.1):
+    def apply(self, h: float = 0.1, **kwargs):
         if h > 0.1: # This usually means there was a lag spike
             return
         h = h * self._time_modifier
@@ -496,7 +480,7 @@ class PositionDeformer(Deformer):
         self._y_max = y_max
         self._shape = shape
 
-    def apply(self, mouse_pos: tuple[float, float] = (0, 0)):
+    def apply(self, mouse_pos: tuple[float, float] = (0, 0), **kwargs):
         # Convert normalized device coordinates with a range [-1.0,1.0] to specified range
         x_value = (mouse_pos[0] + 1.0) / 2.0 * (self._x_bounds[1] - self._x_bounds[0]) + self._x_bounds[0]
         y_value = (mouse_pos[1] + 1.0) / 2.0 * (self._y_bounds[1] - self._y_bounds[0]) + self._y_bounds[0]
