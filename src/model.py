@@ -9,6 +9,7 @@ class Model:
     _model_view: MatrixStack
     _model_directory: str
     _textures: dict[str, Texture]
+    _expressions: list[str]
 
     def __init__(self, model_directory: str):
         self._model_view = MatrixStack()
@@ -21,6 +22,8 @@ class Model:
 
         self._textures = {}
         self._layers = {}
+        self._expressions = self._config.get("expressions") if self._config.get("expressions") != None else []
+
         for i, layer_info in enumerate(reversed(self._config["parts"])):
             existing_texture = self._textures.get(layer_info["mesh"])
             texture = existing_texture if existing_texture != None else Texture(f"{model_directory}/{layer_info["texture"]}") 
@@ -38,7 +41,7 @@ class Model:
                         vertex_info["texPos"][1]
                     )
                     vertices.append(vertex)
-                shape = Shape(vertices, triangle_indices, texture, layer_info.get("name"))
+                shape = Shape(vertices, triangle_indices, texture, layer_info.get("name"), layer_info.get("textureOffset"))
                 self._layers[layer_info["name"]] = shape
                 if layer_info.get("deformers") != None:
                     for deformer_file in layer_info.get("deformers"):
@@ -68,6 +71,14 @@ class Model:
                                     y_max = deformer_config.get("yMax"),
                                     bind = deformer_config.get("bind")
                                 ))
+
+                if layer_info.get("expressionTextureOffsets") != None:
+                    for (expression, offset) in layer_info.get("expressionTextureOffsets").items():
+                        shape.add_deformer(TextureDeformer(
+                            shape,
+                            numpy.array(offset, dtype=numpy.float32),
+                            expression
+                        ))
 
         
         self._root_shape = self._layers[self._config["hierarchy"]["root"]]
@@ -101,6 +112,9 @@ class Model:
 
     def get_config(self) -> dict:
         return self._config
+
+    def get_expressions(self) -> list[str]:
+        return self._expressions
     
     def reset(self):
         for layer in self.get_layers():

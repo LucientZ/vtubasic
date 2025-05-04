@@ -6,7 +6,7 @@
     "yLowerBound": 0.06,
     "yUpperBound": -0.045,
     "xMin": -0.02,
-    "xMax": 0.02,
+    "xMax": 0.015,
     "yMin": -0.045,
     "yMax": 0.06
 }

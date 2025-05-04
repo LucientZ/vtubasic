@@ -66,7 +66,7 @@ class App:
         self._running = True
         self.render_loop()
         
-    def set_bg_color(self, r: float, g: float, b: float, a: float) -> None:
+    def set_bg_color(self, r: float, g: float, b: float, a: float = 1.0) -> None:
         glClearColor(r, g, b, a)
 
     def render_loop(self) -> None:
@@ -159,11 +159,18 @@ class App:
 class RuntimeApp(App):
     _physics_clock: pygame.time.Clock
     _follow_mouse: bool
+    _expressions: list[str]
+    _current_expression: Union[str, None]
 
     def __init__(self):
         self._follow_mouse = False
         self._physics_clock = pygame.time.Clock()
+        self._current_expression = None
         super().__init__()
+
+    def load_model(self, directory_path):
+        super().load_model(directory_path)
+        self._expressions = self._model.get_expressions()
 
     def run(self) -> None:
         self._running = True
@@ -186,19 +193,61 @@ class RuntimeApp(App):
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_w:
                     self._draw_wireframe = not self._draw_wireframe
-                if event.key == pygame.K_r:
+                elif event.key == pygame.K_r:
                     if self._model != None:
                         self._model.reset()
+                elif event.key == pygame.K_z:
+                    self.set_bg_color(1.0, 0.0, 0.0)
+                elif event.key == pygame.K_x:
+                    self.set_bg_color(0.0, 1.0, 0.0)
+                elif event.key == pygame.K_c:
+                    self.set_bg_color(0.0, 0.0, 1.0)
+                elif event.key == pygame.K_1:
+                    if len(self._expressions) > 0:
+                        self._current_expression = self._expressions[0]
+                        print(f"Current Expression: {self._current_expression}")
+                elif event.key == pygame.K_2:
+                    if len(self._expressions) > 1:
+                        self._current_expression = self._expressions[1]
+                        print(f"Current Expression: {self._current_expression}")
+                elif event.key == pygame.K_3:
+                    if len(self._expressions) > 2:
+                        self._current_expression = self._expressions[2]
+                        print(f"Current Expression: {self._current_expression}")
+                elif event.key == pygame.K_4:
+                    if len(self._expressions) > 3:
+                        self._current_expression = self._expressions[3]
+                        print(f"Current Expression: {self._current_expression}")
+                elif event.key == pygame.K_5:
+                    if len(self._expressions) > 4:
+                        self._current_expression = self._expressions[4]
+                        print(f"Current Expression: {self._current_expression}")
+                elif event.key == pygame.K_6:
+                    if len(self._expressions) > 5:
+                        self._current_expression = self._expressions[5]
+                        print(f"Current Expression: {self._current_expression}")
+                elif event.key == pygame.K_7:
+                    if len(self._expressions) > 6:
+                        self._current_expression = self._expressions[6]
+                        print(f"Current Expression: {self._current_expression}")
+                elif event.key == pygame.K_8:
+                    if len(self._expressions) > 7:
+                        self._current_expression = self._expressions[7]
+                        print(f"Current Expression: {self._current_expression}")
+                elif event.key == pygame.K_9:
+                    if len(self._expressions) > 8:
+                        self._current_expression = self._expressions[8]
+                        print(f"Current Expression: {self._current_expression}")
 
     def after_render(self):
         delta_time = self._physics_clock.tick() / 1000
 
         look_position = self._desktop_ndc_mouse_pos
         for shape in self._shapes:
-            shape.apply_deformers(delta_time=delta_time, mouse_pos=look_position)
+            shape.apply_deformers(delta_time=delta_time, mouse_pos=look_position, expression=self._current_expression)
         
         for shape in self._model.get_layers():
-            shape.apply_deformers(delta_time=delta_time, mouse_pos=look_position)
+            shape.apply_deformers(delta_time=delta_time, mouse_pos=look_position, expression=self._current_expression)
 
 
     def quit(self) -> None:

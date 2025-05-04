@@ -1,6 +1,6 @@
 {
     "name": "Luci",
-    "expressions": ["Neutral"],
+    "expressions": ["Neutral", "Happy", "Excited", "Grumpy", "Desolate"],
     "parts": [
         {
             "name": "Top Hair",
@@ -21,33 +21,80 @@
             "deformers": ["deformers/frontBangsPhysics.json", "deformers/frontBangsPosition.json"]
         },
         {
-            "name": "Eye Lashes",
+            "name": "Left Eye Lash",
             "texture": "textures/Eyelashes.png",
-            "mesh": "meshes/square.json",
-            "deformers": ["deformers/eyePosition.json"]
+            "mesh": "meshes/leftEyeLashMesh.json",
+            "deformers": ["deformers/eyePosition.json"],
+            "expressionTextureOffsets": {
+                "Neutral": [0.0, 0.0],
+                "Happy": [0.0, 0.0],
+                "Excited": [0.1792, 0.0],
+                "Grumpy": [0.0, 0.0],
+                "Desolate": [0.3584, 0.0]
+            }
+        },
+        {
+            "name": "Right Eye Lash",
+            "texture": "textures/Eyelashes.png",
+            "mesh": "meshes/rightEyeLashMesh.json",
+            "deformers": ["deformers/eyePosition.json"],
+            "expressionTextureOffsets": {
+                "Neutral": [0.0, 0.0],
+                "Happy": [0.0, 0.0],
+                "Excited": [0.1792, 0.0],
+                "Grumpy": [0.0, 0.0],
+                "Desolate": [0.3584, 0.0]
+            }
         },
         {
             "name": "Left Iris",
             "texture": "textures/Irises.png",
             "mesh": "meshes/leftIrisMesh.json",
-            "deformers": ["deformers/leftIrisPosition.json"]
+            "deformers": ["deformers/leftIrisPosition.json"],
+            "expressionTextureOffsets": {
+                "Neutral": [0.0, 0.0],
+                "Happy": [0.0, 0.0],
+                "Excited": [0.1792, 0.0],
+                "Grumpy": [0.0, 0.0],
+                "Desolate": [0.3584, 0.0]
+            }
         },
         {
             "name": "Right Iris",
             "texture": "textures/Irises.png",
             "mesh": "meshes/rightIrisMesh.json",
-            "deformers": ["deformers/rightIrisPosition.json"]
+            "deformers": ["deformers/rightIrisPosition.json"],
+            "expressionTextureOffsets": {
+                "Neutral": [0.0, 0.0],
+                "Happy": [0.0, 0.0],
+                "Excited": [0.1792, 0.0],
+                "Grumpy": [0.0, 0.0],
+                "Desolate": [0.3584, 0.0]
+            }
         },
         {
-            "name": "Eye Whites",
+            "name": "Left Eye Whites",
             "texture": "textures/EyeWhites.png",
-            "mesh": "meshes/square.json"
+            "mesh": "meshes/leftEyeWhitesMesh.json"
+        },
+        {
+            "name": "Right Eye Whites",
+            "texture": "textures/EyeWhites.png",
+            "mesh": "meshes/rightEyeWhitesMesh.json"
         },
         {
             "name": "Mouth",
             "texture": "textures/Mouth.png",
-            "mesh": "meshes/square.json",
-            "deformers": ["deformers/mouthPosition.json"]
+            "mesh": "meshes/mouthMesh.json",
+            "deformers": ["deformers/mouthPosition.json"],
+            "textureOffset": [0.0, 0.0],
+            "expressionTextureOffsets": {
+                "Neutral": [0.0, 0.0],
+                "Happy": [0.057, 0.0],
+                "Excited": [0.057, 0.0],
+                "Grumpy": [0.104, 0.0],
+                "Desolate": [0.159, 0.0]
+            }
         },
         {
             "name": "Nose",
@@ -122,7 +169,8 @@
                 "Back Hair",
                 "Right Ear",
                 "Left Ear",
-                "Eye Lashes"
+                "Left Eye Lash",
+                "Right Eye Lash"
             ],
             "Front Clothing": [
                 "Neck",
@@ -130,9 +178,12 @@
                 "Right Jacket Arm",
                 "Back Clothing"
             ],
-            "Eye Lashes": [
-                "Eye Whites",
-                "Left Iris",
+            "Left Eye Lash": [
+                "Left Eye Whites",
+                "Left Iris"
+            ],
+            "Right Eye Lash": [
+                "Right Eye Whites",
                 "Right Iris"
             ],
             "Front Hair": [

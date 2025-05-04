@@ -28,6 +28,11 @@ python main.py
 
 - `w` Toggle drawing mesh
 - `r` Reset physics
+- `z` Set background to red
+- `x` Set background to blue
+- `c` Set background to green
+
+- `(0-9)` Expressions
 
 ### Editor (broken)
 

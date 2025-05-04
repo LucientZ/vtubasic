@@ -163,7 +163,7 @@ class Shape:
     _texture_offset: numpy.ndarray
     _WIREFRAME_TEXTURE: Texture # Static variable used when drawing wireframe. Initialized when pygame is finished
 
-    def __init__(self, vertices: list[Vertex], triangle_indices: list[int], texture: Texture = None, name: str = None):
+    def __init__(self, vertices: list[Vertex], triangle_indices: list[int], texture: Texture = None, name: str = None, texture_offset: list[float] = None):
         """
         Creates a Shape object with given parameters
         
@@ -183,7 +183,7 @@ class Shape:
         self._child_shapes = []
         self._translation = [0.0, 0.0]
         self._rotation = [0.0, 0.0, 0.0]
-        self._texture_offset = numpy.array([0.0, 0.0], dtype=numpy.float32)
+        self._texture_offset = numpy.array([texture_offset[0], texture_offset[1]], dtype=numpy.float32) if texture_offset != None else numpy.array([0.0, 0.0], dtype=numpy.float32) 
         self._transformation_matrix = numpy.identity(3, dtype=numpy.float32)
         self._name = name if name != None else "Shape"
 
@@ -520,15 +520,15 @@ class PositionDeformer(Deformer):
 
 class TextureDeformer(Deformer):
     _shape: Shape
-    _name: str
+    _expression: str
     _texture_offset: numpy.ndarray
-    def __init__(self, shape: Shape, texture_offset: numpy.ndarray, name: str):
+    def __init__(self, shape: Shape, texture_offset: numpy.ndarray, expression: str):
         self._shape = shape
         self._texture_offset = texture_offset
-        self._name = name
+        self._expression = expression
 
-    def apply(self, name: str, **_):
-        if name == self._name:
+    def apply(self, expression: str, **_):
+        if expression == self._expression:
             self._shape.set_texture_offset(self._texture_offset)
 
 class AnimationDeformer(Deformer):
