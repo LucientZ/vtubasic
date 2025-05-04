@@ -64,13 +64,13 @@
             "name": "Left Ear",
             "texture": "textures/Ears.png",
             "mesh": "meshes/leftEarMesh.json",
-            "deformers": []
+            "deformers": ["deformers/leftEarPosition.json"]
         },
         {
             "name": "Right Ear",
             "texture": "textures/Ears.png",
-            "mesh": "meshes/square.json",
-            "deformers": []
+            "mesh": "meshes/rightEarMesh.json",
+            "deformers": ["deformers/rightEarPosition.json"]
         },
         {
             "name": "Front Clothing",

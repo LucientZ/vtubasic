@@ -1,7 +1,7 @@
 {
     "type": "position",
-    "xLowerBound": -0.01,
-    "xUpperBound": 0.01,
+    "xLowerBound": -0.018,
+    "xUpperBound": 0.018,
     "yLowerBound": -0.04,
     "yUpperBound": 0.04
 }

@@ -368,6 +368,7 @@ class ClothDeformer(Deformer):
     _particles: list[Particle]
     _alpha: float
     _damping: float
+    _time_modifier: float # Changes how quickly or slowly physics happens
 
     def __init__(self,
                 shape: Shape,
@@ -375,12 +376,14 @@ class ClothDeformer(Deformer):
                 forces: list[numpy.ndarray] = None,
                 damping: float = 1e-5,
                 alpha: float = 1e-5,
-                mass: float = 10.0):
+                mass: float = 10.0,
+                time_modifier = 1.0):
         self._shape = shape
         self._dynamic_vertex_indices = dynamic_indices if dynamic_indices != None else []
         self._forces = forces if forces != None else []
         self._alpha = alpha
         self._damping = damping
+        self._time_modifier = time_modifier
         self._springs = []
         self._particles = []
 
@@ -422,6 +425,7 @@ class ClothDeformer(Deformer):
     def apply(self, h: float = 0.1):
         if h > 0.1: # This usually means there was a lag spike
             return
+        h = h * self._time_modifier
         # Apply forces to particles
         for index in self._dynamic_vertex_indices:
             particle = self._particles[index]

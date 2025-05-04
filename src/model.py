@@ -54,7 +54,8 @@ class Model:
                                     ],
                                     deformer_config["damping"],
                                     deformer_config["alpha"],
-                                    deformer_config["mass"]
+                                    mass=deformer_config["mass"],
+                                    time_modifier=deformer_config.get("timeModifier") if deformer_config.get("timeModifier") != None else 1.0
                                 ))
                             elif deformer_config["type"] == "position":
                                 shape.add_static_deformer(PositionDeformer(

@@ -3,8 +3,9 @@
     "dynamicVertices": [
         2,8,9,3,4,5,6,7
     ],
-    "alpha": 2e-5,
+    "alpha": 1e-3,
     "damping": 1e-2,
     "gravity": 0.1,
-    "mass": 0.1
+    "mass": 0.1,
+    "timeModifier": 0.5
 }
