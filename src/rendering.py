@@ -231,7 +231,7 @@ class Shape:
             self._texture.unbind()
         program.unbind()
 
-    def apply_transformation_hierarchy(self, model_view: MatrixStack):
+    def apply_transformation_hierarchy(self, model_view: MatrixStack) -> None:
         model_view.push_matrix()
         model_view.rotate(self._rotation[0], self._rotation[1], self._rotation[2])
         model_view.translate(self._translation[0], self._translation[1])
@@ -256,19 +256,20 @@ class Shape:
     def create_vertex_buffers(self) -> None:
         self._vertex_buf = numpy.array(self._vertices, dtype=numpy.float32).flatten()
 
-    def apply_deformers(self, **kwargs):
-        self._translation = [0.0,0.0,0.0]
-        self._rotation = [0.0,0.0,0.0]
+    def apply_deformers(self, **kwargs) -> None:
+        self._translation = [0.0, 0.0, 0.0]
+        self._rotation = [0.0, 0.0, 0.0]
+        self._texture_offset = numpy.array([0.0, 0.0], dtype=numpy.float32)
         for deformer in self._deformers:
             deformer.apply(**kwargs)
 
-    def add_deformer(self, deformer: Deformer):
+    def add_deformer(self, deformer: Deformer) -> None:
         self._deformers.append(deformer)
 
-    def add_child_shape(self, shape: "Shape"):
+    def add_child_shape(self, shape: "Shape") -> None:
         self._child_shapes.append(shape)
 
-    def set_program(self, program: Program):
+    def set_program(self, program: Program) -> None:
         self._program = program
 
     def get_triangle_indices(self) -> list[int]:
@@ -277,7 +278,7 @@ class Shape:
     def get_vertex(self, index: int) -> Vertex:
         return self._vertices[index]
     
-    def translate(self, translation: tuple[float, float]):
+    def translate(self, translation: tuple[float, float]) -> None:
         self._translation[0] += translation[0]
         self._translation[1] += translation[1]
 
@@ -294,8 +295,11 @@ class Shape:
                 original_vertex.t,
             )
 
-    def set_texture_offset(self, offset: numpy.ndarray):
+    def set_texture_offset(self, offset: numpy.ndarray) -> None:
         self._texture_offset = offset
+
+    def get_texture_offset(self) -> numpy.ndarray:
+        return self._texture_offset
 
     def get_all_vertices(self) -> list[Vertex]:
         return self._vertices
@@ -519,6 +523,10 @@ class PositionDeformer(Deformer):
         self._shape.translate((x_value, y_value))
 
 class TextureDeformer(Deformer):
+    """
+    Class which replaces a texture depending on what expression the program is currently using.
+    Note: this class *adds* onto current texture meaning the offset of a shape must be reset before a render cycle
+    """
     _shape: Shape
     _expression: str
     _texture_offset: numpy.ndarray
@@ -529,11 +537,42 @@ class TextureDeformer(Deformer):
 
     def apply(self, expression: str, **_):
         if expression == self._expression:
-            self._shape.set_texture_offset(self._texture_offset)
+            old_offset = self._shape.get_texture_offset()
+            self._shape.set_texture_offset(self._texture_offset + old_offset) 
 
-class AnimationDeformer(Deformer):
-    def __init__(self):
-        pass
+class TextureAnimationDeformer(Deformer):
+    """
+    Class which creates texture-coordinate based animations.
+    Note: this class *adds* onto current texture meaning the offset of a shape must be reset before a render cycle
+    """
+
+    _shape: Shape
+    _keyframes: list[numpy.ndarray] # List of different offsets
+    _timing: list[float]
+    _duration_seconds: float
+    _time: float
+
+    def __init__(self, shape: Shape, keyframes: list[numpy.ndarray], timing: list[float], duration_seconds: float):
+        assert(len(keyframes) == len(timing))
+        self._shape = shape
+        self._keyframes = keyframes
+        self._timing = timing
+        self._duration_seconds = duration_seconds
+        self._time = 0.0
+
+    def apply(self, delta_time: float, **_):
+        self._time += delta_time
+        timing_offset = self._time % self._duration_seconds # Get which point in the animation we are at
+
+        # Find the keyframe that should play in this time
+        for (i) in range(len(self._timing)):
+            prev_time = self._timing[(i-1) % len(self._keyframes)]
+            next_time = self._timing[(i+1) % len(self._keyframes)]
+            if (timing_offset > prev_time or i == 0) and (timing_offset < next_time or i == (len(self._keyframes) - 1)):
+                texture_offset = self._keyframes[i]
+                old_offset = self._shape.get_texture_offset()
+                self._shape.set_texture_offset(texture_offset + old_offset) 
+                break
 
 class ImageShape(Shape):
     """

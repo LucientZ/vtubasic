@@ -24,7 +24,7 @@
             "name": "Left Eye Lash",
             "texture": "textures/Eyelashes.png",
             "mesh": "meshes/leftEyeLashMesh.json",
-            "deformers": ["deformers/eyePosition.json"],
+            "deformers": ["deformers/eyePosition.json", "deformers/blinkAnimation.json"],
             "expressionTextureOffsets": {
                 "Neutral": [0.0, 0.0],
                 "Happy": [0.0, 0.0],
@@ -37,7 +37,7 @@
             "name": "Right Eye Lash",
             "texture": "textures/Eyelashes.png",
             "mesh": "meshes/rightEyeLashMesh.json",
-            "deformers": ["deformers/eyePosition.json"],
+            "deformers": ["deformers/eyePosition.json", "deformers/blinkAnimation.json"],
             "expressionTextureOffsets": {
                 "Neutral": [0.0, 0.0],
                 "Happy": [0.0, 0.0],

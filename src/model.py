@@ -71,6 +71,13 @@ class Model:
                                     y_max = deformer_config.get("yMax"),
                                     bind = deformer_config.get("bind")
                                 ))
+                            elif deformer_config["type"] == "textureAnimation":
+                                shape.add_deformer(TextureAnimationDeformer(
+                                    shape,
+                                    list(map(lambda x: numpy.array(x, dtype=numpy.float32), deformer_config["keyframes"])),
+                                    deformer_config["timing"],
+                                    deformer_config["durationSeconds"]
+                                ))
 
                 if layer_info.get("expressionTextureOffsets") != None:
                     for (expression, offset) in layer_info.get("expressionTextureOffsets").items():
