@@ -1,5 +1,5 @@
 from rendering import *
-import json
+import json, os
 from OpenGL.GL import *
 
 class Model:
@@ -172,3 +172,96 @@ class DebugModel(Model):
         print(f"{name}")
         super().change_root(name)
         self._current_triangulator = self._triangulators[name]
+
+
+DEFAULT_MODEL_CONFIGURATION = {
+    "name": "Default Configuration",
+    "expressions": [],
+    "parts": [
+        {
+            "name": "Body",
+            "texture": "textures/Body.png",
+            "mesh": "meshes/bodyMesh.json",
+            "deformers": ["deformers/bodyPosition.json"]
+        }
+    ],
+    "hierarchy": {
+        "root": "Body",
+        "relations": {
+            "Body": []
+        }
+    }
+}
+
+DEFAULT_MESH = {
+  "triangles": [
+    0,
+    1,
+    3,
+    0,
+    3,
+    2
+  ],
+  "vertices": [
+    {
+      "pos": [
+        -1.0,
+        -1.0
+      ],
+      "texPos": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "pos": [
+        1.0,
+        -1.0
+      ],
+      "texPos": [
+        1.0,
+        0.0
+      ]
+    },
+    {
+      "pos": [
+        -1.0,
+        1.0
+      ],
+      "texPos": [
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "pos": [
+        1.0,
+        1.0
+      ],
+      "texPos": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "pos": [
+        0.5,
+        0.0
+      ],
+      "texPos": [
+        0.0,
+        0.0
+      ]
+    }
+  ]
+}
+
+DEFAULT_POSITION_DEFORMER = {
+    "type": "position",
+    "bind": "mouse",
+    "xLowerBound": -0.01,
+    "xUpperBound": 0.01,
+    "yLowerBound": -0.04,
+    "yUpperBound": 0.0,
+    "yMax": 0.0
+}
