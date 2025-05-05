@@ -141,7 +141,8 @@
         {
             "name": "Neck",
             "texture": "textures/Neck.png",
-            "mesh": "meshes/square.json"
+            "mesh": "meshes/square.json",
+            "deformers": ["deformers/neckPosition.json"]
         },
         {
             "name": "Back Clothing",
