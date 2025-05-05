@@ -1,0 +1,61 @@
+{
+    "name": "Weird Floating Dog",
+    "expressions": [],
+    "parts": [
+        {
+            "name": "Face",
+            "texture": "textures/Face.png",
+            "mesh": "meshes/faceMesh.json",
+            "deformers": ["deformers/facePosition.json"]
+        },
+        {
+            "name": "Left Arm",
+            "texture": "textures/Arms.png",
+            "mesh": "meshes/leftArmMesh.json",
+            "deformers": ["deformers/leftArmPosition.json"]
+        },
+        {
+            "name": "Right Arm",
+            "texture": "textures/Arms.png",
+            "mesh": "meshes/rightArmMesh.json",
+            "deformers": ["deformers/rightArmPosition.json"]
+        },
+        {
+            "name": "Body",
+            "texture": "textures/Body.png",
+            "mesh": "meshes/bodyMesh.json",
+            "deformers": ["deformers/bodyPosition.json"]
+        },
+        {
+            "name": "Left Ear",
+            "texture": "textures/Ears.png",
+            "mesh": "meshes/leftEarMesh.json",
+            "deformers": ["deformers/leftEarPosition.json"]
+        },
+        {
+            "name": "Right Ear",
+            "texture": "textures/Ears.png",
+            "mesh": "meshes/rightEarMesh.json",
+            "deformers": ["deformers/rightEarPosition.json"]
+        },
+        {
+            "name": "Tail",
+            "texture": "textures/Tail.png",
+            "mesh": "meshes/tailMesh.json",
+            "deformers": ["deformers/tailPhysics.json"]
+        }
+    ],
+    "hierarchy": {
+        "root": "Body",
+        "relations": {
+            "Body": [
+                "Tail",
+                "Left Arm",
+                "Right Arm",
+                "Left Ear",
+                "Right Ear",
+                "Face"
+            ]
+        }
+    }
+}
