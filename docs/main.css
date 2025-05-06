@@ -1,0 +1,14 @@
+header {
+    display: flex;
+    flex-direction: row;
+}
+
+header button {
+    border: 0;
+    cursor: pointer;
+    padding: 1em;
+}
+
+header button:hover {
+    background-color: #9f9f9f;
+}

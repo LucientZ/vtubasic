@@ -1,4 +1,4 @@
-# vtubasic
+# VTubasic
 
 Very very simple and basic VTuber runtime. Do not use this if your goal is efficiency!
 
@@ -36,7 +36,6 @@ python main.py
 
 ### Editor (broken)
 
-- `w` Toggle drawing mesh
 - `[` Move back a layer
 - `]` Move forward a layer
 - `click` Add vertex
