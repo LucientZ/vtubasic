@@ -46,4 +46,4 @@ python main.py
 
 ## How it works
 
-An example model is provided for reference of how to configure a model. Copy its style for now while I eventually take the time to write a real guide.
+All the documentation can be found [with this link](https://lucientz.github.io/vtubasic/).
