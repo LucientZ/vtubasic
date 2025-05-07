@@ -1,0 +1,81 @@
+body {
+    background-color: #aeaeae;
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    font-family: "Kanit", sans-serif;
+    font-weight: 300;
+    font-style: normal;
+    font-size: x-large;
+}
+
+main {
+    border-radius: 10px;
+    background-color: white;
+    padding: 1em;
+    margin: 2em;
+}
+
+header {
+    display: flex;
+    flex-direction: row;
+    column-gap: 1em;
+    background-color: white;
+    padding: 1em 2em 1em 2em;
+}
+
+header button {
+    border: 0;
+    cursor: pointer;
+    padding: 1em;
+    height: 100%;
+    font-size: large;
+}
+
+header button:hover {
+    background-color: #9f9f9f;
+}
+
+figure {
+    display: table;
+    margin: 0;
+}
+
+figcaption {
+    display: table-caption;
+    caption-side: bottom;
+}
+
+code {
+    background-color: #eaeaea;
+    padding: 0.3em;
+    border-radius: 10px;
+}
+
+pre {
+    background-color: #eaeaea;
+    padding: 0.3em;
+    border-radius: 10px;
+}
+
+.image-row {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: 1em;
+    column-gap: 0.5em;
+}
+
+@keyframes surprise-animation {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.surprise {
+    animation: 1s cubic-bezier(.18,-0.59,.58,1.29) surprise-animation;
+}

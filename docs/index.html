@@ -4,36 +4,335 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <link rel="stylesheet" href="main.css">
+    <title>VTubasic</title>
+    <link rel="stylesheet" href="public/main.css">
+    <!-- Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Dela+Gothic+One&family=Kanit:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Karla:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
 </head>
 
 <body>
     <header>
-        <a href="https://github.com/LucientZ">
-            <button>LucienZ's GitHub Page</button>
+        <a href="https://github.com/LucientZ/vtubasic">
+            <button>Github Repo</button>
         </a>
-        <button>Surprise</button>
+        <button id="surprise-button">Surprise</button>
     </header>
     <main>
         <section>
             <h1>VTubasic</h1>
             <div class="subtitle" role="doc-subtitle">A silly little project by LucienZ</div>
-            <p>Hi! My name is Robbie, but I normally go by LucienZ on the internet. however you got here, I welcome you</p>
-            <iframe width="560" height="315" src="https://www.youtube.com/embed/hN_ygqlUL5o?si=TfFs1MjFr_Bio1m6" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+            <p>Hi! My name is Robbie, but I normally go by LucienZ on the internet. No matter how you got here, I welcome you!</p>
+            <p>I made a project that implements realtime puppet animation which follows your cursor. If you're lazy and don't want to read this whole thing or you just want to see it in action, I made a video detailing the specifics of this project that you can watch here:</p>
+            <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/hN_ygqlUL5o?si=BJGMaMNjxOl79hGn" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+            <p>If the embed doesn't load for whatever reason, you can find the video <a aria-label="Watch a video about this project." href="https://www.youtube.com/watch?v=hN_ygqlUL5o">with this link</a>.</p>
         </section>
+        <hr>
         <section>
             <h1>Overview/Features</h1>
-            <h2>Features</h2>
+            <p>The basic idea of VTubasic was to create a simple VTuber runtime. I had initially planned for it to run actual Live2D models, but as it turns out, that would be pretty complicated since <code>moc3</code> is a proprietary format</p>
+            <h2>Main Features</h2>
+            <section>
+                <h3>Mouse Position Tracking</h3>
+                <p>The program actively tracks mouse movement tied to different deformers. The program translates the current mouse position to normalised device coordinates which act as parameter inputs to the different position deformers.</p>
+                <span class="image-row">
+                    <img src="assets/Luci-Spin.gif" alt="Anime girl looking at mouse on a desktop screen">
+                </span>
+            </section>
+            <section>
+                <h3>Custom file format</h3>
+                <p>To make things easier to debug, JSON was used for storing model information. While it isn't the most efficient space-wise, it made debugging the project a lot easier.</p>
+            </section>
+            <section>
+                <h3>Position based dynamics</h3>
+                <p>To simulate hair physics, this uses position based dynamics (PBD) with various vertices. Different spring constraints are specified between dynamic vertices to give a "jelly-like" appearance to the hair. This can also be added to clothes and other things that deform.</p>
+                <p>One important thing to note is that the physics are simulated on the CPU. While this doesn't necessarily pose a problem on a surface level, it means that a high amout of vertices may see a performance impact.</p>
+                <span class="image-row">
+                    <img src="assets/Luci-Hair-Bounce.gif" alt="Anime girl up and down with her hair reacting to the bouncing">
+                </span>
+            </section>
+            <section>
+                <h3>Texture based expressions and animations</h3>
+                <p>Expressions are created by setting different texture offsets in the JSON config file. In addition to this, animations can be added by setting different texture offsets at certain timestamps.</p>
+                <span class="image-row">
+                    <figure>
+                        <img src="assets/Luci-Neutral.png" alt="Anime girl with a neutral expression">
+                        <figcaption>Luci in her natural state of being</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="assets/Luci-Excited.png" alt="Anime girl with an excited expression">
+                        <figcaption>Luci but she has a weird disease that turns her pupils into stars</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="assets/Luci-Desolate.png" alt="Anime girl with a desolate expression">
+                        <figcaption>Luci when she has to hear the ramblings of an Arch Linux user</figcaption>
+                    </figure>
+                </span>
+            </section>
+            <section>
+                <h2>Multiple model and background color support</h2>
+                <p>The application supports multiple models and background colors to support characters that may have green on them.</p>
+                <span class="image-row">
+                    <img src="assets/Weird-Dog.gif" alt="Floating dog on blue background">
+                </span>
+            </section>
+        </section>
+        <hr>
+        <section>
+            <h1>Running the application</h1>
+            <p>
+                The program is built on python and requires some dependencies to be installed beforehand. The list of libraries used can be found in the <a href="#libraries">libraries section</a>.
+            </p>
+            <pre>pip install -r requirements.txt</pre>
+            <p>
+                The program can be run with the following:
+            </p>
+            <pre>python main.py</pre>
         </section>
         <section>
-            <h1>How it works</h1>
+            <h1>Application Controls</h1>
+            <h2>Runtime</h2>
+            <ul>
+                <li><code>w</code> Toggle drawing mesh</li>
+                <li><code>r</code> Reset physics</li>
+                <li><code>z</code> Set background to red</li>
+                <li><code>x</code> Set background to blue</li>
+                <li><code>c</code> Set background to green</li>
+                <li><code>(0-9)</code> Expressions</li>
+            </ul>
+            <h2>Editor</h2>
+            <ul>
+                <li><code>[</code> Move back a layer</li>
+                <li><code>]</code> Move forward a layer</li>
+                <li><code>click</code> Add vertex</li>
+                <li><code>z</code> Remove the most recent vertex
+                    <ul>
+                        <li>This <b>includes</b> any existing vertices</li>
+                    </ul>
+                </li>
+                <li><code>r</code> Reset vertices to last loadd mesh</li>
+                <li><code>ctrl-s</code> Overwrites the loaded mesh with current mesh</li>
+            </ul>
         </section>
+        <hr>
         <section>
             <h1>Making your own model</h1>
-            <p>I'd highly advise against this, but if you really want to suffer through the process</p>
+            <p>I'd highly advise against this, but if you really want to suffer through the process then here's how to do it.</p>
+            <p>Models must be put in the <code>/models</code> directory. The structure of a model file is the following:</p>
+
+            <section>
+                <h2>Directory Format</h2>
+                <pre>
+/deformers
+/meshes
+/textures
+config.json
+</pre>
+                <p>
+                    Most of the directories and files are pretty self-explanatory, but just in case here's the
+                </p>
+                <ul>
+                    <li><code>/deformers</code>
+                        <ul>
+                            <li>Contains any information that might change the model. This includes things layer positioning, physics, etc...</li>
+                        </ul>
+                    </li>
+                    <li><code>/meshes</code>
+                        <ul>
+                            <li>This is where the triangulation information for models go.</li>
+                        </ul>
+                    </li>
+                    <li><code>/textures</code>
+                        <ul>
+                            <li>This is where images used by the model go.</li>
+                        </ul>
+                    </li>
+                    <li><code>config.json</code>
+                        <ul>
+                            <li>Contains metadata about the model as well as the layer inforamation and transformation hierarchy.</li>
+                            <li>This is really the only required file for the model. Every other directory is more for organization.</li>
+                        </ul>
+                    </li>
+                </ul>
+                <p>If you're lazy, the program can create a default model for you. Simply run it and select "Create a new model from scratch"</p>
+            </section>
+            <section>
+                <h2>Configuring the model</h2>
+
+                <section>
+
+                    <h3>Setup</h3>
+                    <p>Firstly, textures must be added for anything to display. These can be any filetype supported by pygame. <code>.png</code> files are usually best.</p>
+                    <p>WARNING: Textures must be the same aspect ration of the window, which is currently widescreen (16:9)</p>
+                    <p>Secondly, a mesh must be added to for the texture. Meshes contain both vertex information and vertex coordinate info about a specific layer. It's usually easiest to use a square that spans the screen as a default. For example:</p>
+                    <pre>
+{
+  "triangles": [ 0, 1, 3, 0, 3, 2],
+  "vertices": [
+    {
+      "pos": [ -1.0, -1.0 ],
+      "texPos": [ 0.0, 0.0 ]
+    },
+    {
+      "pos": [ 1.0, -1.0 ],
+      "texPos": [ 1.0, 0.0 ]
+    },
+    {
+      "pos": [ -1.0, 1.0 ],
+      "texPos": [ 0.0, 1.0 ]
+    },
+    {
+      "pos": [ 1.0, 1.0 ],
+      "texPos": [ 1.0, 1.0 ]
+    },
+    {
+      "pos": [ 0.5, 0.0 ],
+      "texPos": [ 0.0, 0.0 ]
+    }
+  ]
+}
+</pre>
+
+                    <p>Finally, a <code>config.json</code> file should be created to specify the different files. As an example, here is the file that is automatically generated when using the program to make a model:</p>
+                    <pre>
+{
+    "name": "Default Configuration",
+    "expressions": [],
+    "parts": [
+        {
+            "name": "Body",
+            "texture": "textures/Body.png",
+            "mesh": "meshes/bodyMesh.json",
+            "deformers": [
+                "deformers/bodyPosition.json"
+            ]
+        }
+    ],
+    "hierarchy": {
+        "root": "Body",
+        "relations": {
+            "Body": []
+        }
+    }
+}
+</pre>
+                </section>
+
+
+                <section>
+                    <h3>Editing meshes</h3>
+                    <p>To edit a mesh, use the mesh editor when starting the app instead of the runtime. Click anywhere to add a vertex and the triangulation will be done automatically.</p>
+                    <p>WARNING: Saving a mesh will override the currently loaded mesh. Make sure different layers have different meshes loaded.</p>
+                    <span class="image-row">
+                        <img src="assets/Vertex-Editing.gif" alt="Floating dog on blue background">
+                    </span>
+                </section>
+                <section>
+                    <h3>Deformers</h3>
+                    <p>There are 3 main deformer types that can make realtime modifications to the model:</p>
+                    <ol>
+                        <li><a href="#position-deformers">Position Deformers</a></li>
+                        <li><a href="#cloth-deformers">Cloth Deformers</a></li>
+                        <li><a href="#texture-animation-deformers">Texture Animation Deformers</a></li>
+                    </ol>
+                    <section>
+                        <h4 id="position-deformers">Position Deformers</h4>
+                        <p>These move a layer based on the position of the mouse. A full example is provided below:</p>
+                        <pre>
+{
+    "type": "position",
+    "bind": "mouse",
+    "xLowerBound": -0.006,
+    "xUpperBound": 0.006,
+    "yLowerBound": -0.012,
+    "yUpperBound": 0.025,
+    "xMin": -0.012,
+    "xMax": 0.012,
+    "yMin": -0.03,
+    "yMax": 0.03
+}
+</pre>
+                        <p>The <code>bounds</code> parameters are used to determine how quickly much the mouse affects the position of a layer. The <code>min</code> and <code>max</code> parameters define hard limits on the position of the layer.</p>
+                    </section>
+                    <section>
+                        <h4 id="cloth-deformers">Cloth Deformers</h4>
+                        <p>These mutate different specified vertices based on spring constraints built by the triangles from the mesh. A full example is provided below:</p>
+                        <pre>
+{
+    "type": "cloth",
+    "dynamicVertices": [0, 1, 2, 3, 4, 5, 7, 8, 9, 10],
+    "alpha": 6e-4,
+    "damping": 5,
+    "gravity": 0.3,
+    "mass": 10.0,
+    "timeModifier": 0.5
+}
+</pre>
+                        <p>Each vertex specified in <code>dynamicVertices</code> will have cloth physics applied to them. The other parameters can be adjusted to get a specific "look" to the physics.</p>
+                    </section>
+                    <section>
+                        <h4 id="texture-animation-deformers">Texture Animation Deformers</h4>
+                        <p>These changes the texture coordinates of a layer based on a specified timing. A full example is provided below:</p>
+                        <pre>
+{
+    "type": "textureAnimation",
+    "keyframes": [
+        [0.0, 0.0],
+        [0.0, -0.142],
+        [0.0, -0.284],
+        [0.0, -0.142]
+    ],
+    "timing": [
+        0.0,
+        5.7,
+        5.8,
+        5.9
+    ],
+    "durationSeconds": 6.0
+}
+</pre>
+                        <p>Keyframes are different texture <b>offsets</b> for the texture. This means that they translate the texture from its current position.</p>
+                        <p>The timing list is based on the duration of the animation itself. Ensure that this list is sorted chronologically with the keyframes.</p>
+                    </section>
+                </section>
+            </section>
+        </section>
+        <hr>
+        <section>
+            <h1 id="libraries">Python Libraries</h1>
+            <ul>
+                <li><a href="https://www.pygame.org/docs/">pygame</a></li>
+                <li><a href="https://pyopengl.sourceforge.net/">PyOpenGL</a></li>
+                <li><a href="https://pyopengl.sourceforge.net/">PyOpenGL_accelerate</a></li>
+                <li><a href="https://numpy.org/">numpy</a></li>
+                <li><a href="https://pynput.readthedocs.io/en/latest/">pynput</a></li>
+            </ul>
+            <h1>References</h1>
+            <ul>
+                <li><a href="https://www.youtube.com/watch?v=LCK1qdp_HhQ&list=PLn3eTxaOtL2PDnEVNwOgZFm5xYPr4dUoR">GetIntoGameDev pygame opengl tutorial</a></li>
+                <li><a href="https://en.wikipedia.org/wiki/Circumcircle#Circumcenter_coordinates">Wikipedia page on circumcircles</a></li>
+                <li><a href="https://www.gorillasun.de/blog/bowyer-watson-algorithm-for-delaunay-triangulation/">Overview of algorithm for Delaunay triangles</a></li>
+            </ul>
         </section>
     </main>
+    <script>
+        let timeoutId = null;
+        document.getElementById("surprise-button").onclick = function () {
+            if (timeoutId) {
+                return;
+            }
+
+            this.classList.add("surprise");
+
+            timeoutId = setTimeout(() => {
+                if (this.classList.contains("surprise")) {
+                    this.classList.remove("surprise");
+                }
+                timeoutId = null;
+            }, 1100)
+        }
+    </script>
 </body>
 
 </html>

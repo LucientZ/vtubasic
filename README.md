@@ -31,7 +31,6 @@ python main.py
 - `z` Set background to red
 - `x` Set background to blue
 - `c` Set background to green
-
 - `(0-9)` Expressions
 
 ### Editor (broken)
@@ -39,10 +38,9 @@ python main.py
 - `[` Move back a layer
 - `]` Move forward a layer
 - `click` Add vertex
-    - This currently just prints these to the console
 - `z` Remove the most recent vertex
     - This includes any existing vertices
-- `r` Reset vertices to last saved mesh
+- `r` Reset vertices to last loaded mesh
 - `ctrl-s` Overwrites the loaded mesh with current mesh
 
 
